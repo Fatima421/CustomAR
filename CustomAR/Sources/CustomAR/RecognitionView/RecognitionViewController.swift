@@ -9,7 +9,7 @@ import UIKit
 import AVFoundation
 import Vision
 
-open class RecognitionViewController: ARViewController {
+open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
     
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
@@ -18,11 +18,21 @@ open class RecognitionViewController: ARViewController {
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        initialParameters()
+    }
+    
+    open override func viewDidLoad() {
+        super.viewDidLoad()
+        initialParameters()
+    }
+
+    func initialParameters() {
         hasNavigatedToPanoramaView = false
         resetZoom()
         if detectionOverlay.superlayer == nil {
             rootLayer.addSublayer(detectionOverlay)
         }
+        setupView()
     }
     
     func resetZoom() {
@@ -56,6 +66,18 @@ open class RecognitionViewController: ARViewController {
             }
         }
         self.requests = [objectRecognition]
+    }
+    
+    private func setupView() {
+        view.addSubview(closeButton)
+
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            closeButton.widthAnchor.constraint(equalToConstant: 44),
+            closeButton.heightAnchor.constraint(equalToConstant: 44),
+            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
+        ])
     }
     
     func drawVisionRequestResults(_ results: [Any]) {
@@ -113,7 +135,7 @@ open class RecognitionViewController: ARViewController {
     func detectionTimerExpired(_ objectBounds: CGRect) {
         if !hasNavigatedToPanoramaView {
             hasNavigatedToPanoramaView = true
-            zoomAnimation(duration: 0.5, scale: 8, objectBounds: objectBounds) {
+            zoomAnimation(duration: 0.8, scale: 6, objectBounds: objectBounds) {
                 self.navigateToPanoramaView()
             }
         }
@@ -190,12 +212,28 @@ open class RecognitionViewController: ARViewController {
         return shapeLayer
     }
     
+    private lazy var closeButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage(named: "close"), for: .normal)
+        button.tintColor = .white
+        button.layer.cornerRadius = 10
+        button.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+        return button
+    }()
+    
     // MARK: Navigation
     func navigateToPanoramaView() {
         DispatchQueue.main.async {
             let panoramaViewController = PanoramaViewController()
-            panoramaViewController.image = UIImage(named: "sagrada", in: Bundle.module, compatibleWith: nil) // Replace with your desired panorama image
-            self.navigationController?.pushViewController(panoramaViewController, animated: true)
+            panoramaViewController.image = UIImage(named: "sagrada", in: Bundle.module, compatibleWith: nil)
+            panoramaViewController.modalPresentationStyle = .overCurrentContext
+            panoramaViewController.transitioningDelegate = self
+            self.present(panoramaViewController, animated: true, completion: nil)
         }
+    }
+    
+    @objc func didTapClose() {
+        self.dismiss(animated: true)
     }
 }
