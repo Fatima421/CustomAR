@@ -11,10 +11,14 @@ import Vision
 
 open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
     
+    // MARK: - Properties
+    
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
     private var hasNavigatedToPanoramaView: Bool = false
     private var detectionTimer: Timer?
+    
+    // MARK: - Life Cycle
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -96,7 +100,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 }
             }
                                     
-            let shapeLayer = self.createRoundedRectLayerWithBounds(objectBounds)
+            let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
             
             detectionOverlay.addSublayer(shapeLayer)
         } else {
@@ -106,6 +110,36 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         self.updateLayerGeometry()
     }
     
+    func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 1.0, density: CGFloat = 0.015) -> CALayer {
+        let shapeLayer = CALayer()
+        shapeLayer.bounds = bounds
+        shapeLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        shapeLayer.name = "Found Object"
+        
+        let path = UIBezierPath()
+        
+        let numberOfDots = Int(bounds.width * bounds.height * density)
+        
+        for _ in 0..<numberOfDots {
+            let x = bounds.origin.x + CGFloat.random(in: 0..<bounds.width)
+            let y = bounds.origin.y + CGFloat.random(in: 0..<bounds.height)
+            path.move(to: CGPoint(x: x, y: y))
+            path.addArc(withCenter: CGPoint(x: x, y: y), radius: dotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
+        }
+        
+        let shape = CAShapeLayer()
+        shape.path = path.cgPath
+        shape.fillColor = UIColor.yellow.cgColor
+        shapeLayer.addSublayer(shape)
+        
+        let maskLayer = CAShapeLayer()
+        let maskPath = UIBezierPath(roundedRect: bounds, cornerRadius: 10)
+        maskLayer.path = maskPath.cgPath
+        shapeLayer.mask = maskLayer
+        
+        return shapeLayer
+    }
+
     func zoomAnimation(duration: TimeInterval, scale: CGFloat, objectBounds: CGRect, completion: (() -> Void)? = nil) {
         DispatchQueue.main.async {
             CATransaction.begin()
