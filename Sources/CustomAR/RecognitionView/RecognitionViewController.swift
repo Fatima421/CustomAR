@@ -17,9 +17,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var requests = [VNRequest]()
     private var hasNavigatedToPanoramaView: Bool = false
     private var detectionTimer: Timer?
-    var detectionTime: Double?
+    public var detectionTime: Double?
     private var detectionRestartTimer: Timer?
-    var detectionInterval: Double?
+    public var detectionInterval: Double?
     
     // MARK: - Life Cycle
     
