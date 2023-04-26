@@ -17,6 +17,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var requests = [VNRequest]()
     private var hasNavigatedToPanoramaView: Bool = false
     private var detectionTimer: Timer?
+    var detectionTime: Double?
+    private var detectionRestartTimer: Timer?
+    var detectionInterval: Double?
     
     // MARK: - Life Cycle
     
@@ -29,7 +32,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         super.viewDidLoad()
         initialParameters()
     }
-
+    
     func initialParameters() {
         hasNavigatedToPanoramaView = false
         resetZoom()
@@ -47,7 +50,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             self.previewLayer?.transform = CATransform3DIdentity
             self.previewLayer?.anchorPoint = CGPoint(x: 0.5, y: 0.5) // Reset anchorPoint
             self.previewLayer?.position = CGPoint(x: self.rootLayer.bounds.midX, y: self.rootLayer.bounds.midY) // Reset position
-                    
+            
             CATransaction.commit()
         }
     }
@@ -74,7 +77,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     private func setupView() {
         view.addSubview(closeButton)
-
+        
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             closeButton.widthAnchor.constraint(equalToConstant: 44),
@@ -92,20 +95,24 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             .max(by: { $0.confidence < $1.confidence }) {
             
             let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
-
+            
             if detectionTimer == nil {
-                detectionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+                detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
                     self?.detectionTimerExpired(objectBounds)
                 }
+            } else {
+                detectionRestartTimer?.invalidate()
             }
-                                    
+            
+            detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval ?? 0.5, repeats: false) { [weak self] _ in
+                self?.detectionTimer?.invalidate()
+                self?.detectionTimer = nil
+            }
+            
             let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
             
             detectionOverlay.addSublayer(shapeLayer)
-        } else {
-            detectionTimer?.invalidate()
-            detectionTimer = nil
         }
         self.updateLayerGeometry()
     }
@@ -139,7 +146,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         return shapeLayer
     }
-
+    
     func zoomAnimation(duration: TimeInterval, scale: CGFloat, objectBounds: CGRect, completion: (() -> Void)? = nil) {
         DispatchQueue.main.async {
             CATransaction.begin()
@@ -164,7 +171,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             CATransaction.commit()
         }
     }
-
+    
     
     func detectionTimerExpired(_ objectBounds: CGRect) {
         if !hasNavigatedToPanoramaView {
