@@ -17,8 +17,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var requests = [VNRequest]()
     private var hasNavigatedToPanoramaView: Bool = false
     private var detectionTimer: Timer?
-    public var detectionTime: Double?
     private var detectionRestartTimer: Timer?
+    public var detectionTime: Double?
     public var detectionInterval: Double?
     
     // MARK: - Life Cycle
@@ -31,6 +31,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     open override func viewDidLoad() {
         super.viewDidLoad()
         initialParameters()
+        
+        print("--- dt: \(detectionTime)")
+        print("--- di: \(detectionInterval)")
     }
     
     func initialParameters() {
