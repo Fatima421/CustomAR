@@ -60,7 +60,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func setupVision() {
         let config = MLModelConfiguration()
-        guard let model = try? SafaCruzModel(configuration: config) else { return }
+        guard let model = try? SagradaFamiliaDetector(configuration: config) else { return }
         guard let objectDetectionModel = try? VNCoreMLModel(for: model.model) else { return }
         
         let objectRecognition = VNCoreMLRequest(model: objectDetectionModel) { [weak self] request, error in
