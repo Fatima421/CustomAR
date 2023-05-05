@@ -8,6 +8,7 @@
 import UIKit
 import AVFoundation
 import Vision
+import CoreML
 
 open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
     
@@ -20,6 +21,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var detectionRestartTimer: Timer?
     public var detectionTime: Double?
     public var detectionInterval: Double?
+    public var model: MLModel?
     
     // MARK: - Life Cycle
     
@@ -31,9 +33,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     open override func viewDidLoad() {
         super.viewDidLoad()
         initialParameters()
-        
-        print("--- dt: \(detectionTime)")
-        print("--- di: \(detectionInterval)")
     }
     
     func initialParameters() {
@@ -59,23 +58,23 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func setupVision() {
-        let config = MLModelConfiguration()
-        guard let model = try? SagradaFamiliaDetector(configuration: config) else { return }
-        guard let objectDetectionModel = try? VNCoreMLModel(for: model.model) else { return }
-        
-        let objectRecognition = VNCoreMLRequest(model: objectDetectionModel) { [weak self] request, error in
-            if let error = error {
-                print("Object detection error: \(error)")
-                return
+        if let model = model {
+            guard let objectDetectionModel = try? VNCoreMLModel(for: model) else { return }
+
+            let objectRecognition = VNCoreMLRequest(model: objectDetectionModel) { [weak self] request, error in
+                if let error = error {
+                    print("Object detection error: \(error)")
+                    return
+                }
+
+                guard let results = request.results as? [VNRecognizedObjectObservation] else { return }
+
+                DispatchQueue.main.async {
+                    self?.drawVisionRequestResults(results)
+                }
             }
-            
-            guard let results = request.results as? [VNRecognizedObjectObservation] else { return }
-            
-            DispatchQueue.main.async {
-                self?.drawVisionRequestResults(results)
-            }
+            self.requests = [objectRecognition]
         }
-        self.requests = [objectRecognition]
     }
     
     private func setupView() {
