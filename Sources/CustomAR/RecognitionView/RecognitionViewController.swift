@@ -10,6 +10,10 @@ import AVFoundation
 import Vision
 import CoreML
 
+protocol RecognitionViewControllerDelegate: AnyObject {
+    func recognitionViewController(_ controller: RecognitionViewController, didDetectObject objectName: String)
+}
+
 open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
     
     // MARK: - Properties
@@ -22,6 +26,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var detectionTime: Double?
     public var detectionInterval: Double?
     public var model: MLModel?
+    weak var delegate: RecognitionViewControllerDelegate?
     
     // MARK: - Life Cycle
     
@@ -97,11 +102,13 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             .max(by: { $0.confidence < $1.confidence }) {
             
             let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
-            
+
             if detectionTimer == nil {
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
-                    self?.detectionTimerExpired(objectBounds)
+                    if let topLabel = objectObservation.labels.max(by: { $0.confidence < $1.confidence }) {
+                        self?.detectionTimerExpired(objectBounds, topLabel.identifier)
+                    }
                 }
             } else {
                 detectionRestartTimer?.invalidate()
@@ -175,11 +182,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     
-    func detectionTimerExpired(_ objectBounds: CGRect) {
+    func detectionTimerExpired(_ objectBounds: CGRect, _ identifier: String) {
         if !hasNavigatedToPanoramaView {
             hasNavigatedToPanoramaView = true
             zoomAnimation(duration: 0.8, scale: 6, objectBounds: objectBounds) {
-                self.navigateToPanoramaView()
+                self.delegate?.recognitionViewController(self, didDetectObject: identifier)
             }
         }
     }
@@ -264,17 +271,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
         return button
     }()
-    
-    // MARK: Navigation
-    func navigateToPanoramaView() {
-        DispatchQueue.main.async {
-            let panoramaViewController = PanoramaViewController()
-            panoramaViewController.image = UIImage(named: "sagrada", in: Bundle.module, compatibleWith: nil)
-            panoramaViewController.modalPresentationStyle = .overCurrentContext
-            panoramaViewController.transitioningDelegate = self
-            self.present(panoramaViewController, animated: true, completion: nil)
-        }
-    }
     
     @objc func didTapClose() {
         self.dismiss(animated: true)
