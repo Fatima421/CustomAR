@@ -10,7 +10,7 @@ import AVFoundation
 import Vision
 import CoreML
 
-protocol RecognitionViewControllerDelegate: AnyObject {
+public protocol RecognitionViewControllerDelegate: AnyObject {
     func recognitionViewController(_ controller: RecognitionViewController, didDetectObject objectName: String)
 }
 
@@ -26,7 +26,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var detectionTime: Double?
     public var detectionInterval: Double?
     public var model: MLModel?
-    weak var delegate: RecognitionViewControllerDelegate?
+    public weak var delegate: RecognitionViewControllerDelegate?
     
     // MARK: - Life Cycle
     
