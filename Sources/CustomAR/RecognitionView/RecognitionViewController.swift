@@ -21,7 +21,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var detectionRestartTimer: Timer?
     public var detectionTime: Double?
     public var detectionInterval: Double?
-    public var model: MLModel?
+    public var customARConfig: CustomARConfig?
     
     // MARK: - Life Cycle
     
@@ -58,7 +58,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func setupVision() {
-        if let model = model {
+        if let model = customARConfig?.model {
             guard let objectDetectionModel = try? VNCoreMLModel(for: model) else { return }
 
             let objectRecognition = VNCoreMLRequest(model: objectDetectionModel) { [weak self] request, error in
