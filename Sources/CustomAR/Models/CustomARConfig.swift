@@ -13,4 +13,10 @@ public struct CustomARConfig {
     let model: MLModel
     let labels: [String]
     let actions: [(VNRecognizedObjectObservation) -> Void]
+    
+    public init(model: MLModel, labels: [String], actions: [(VNRecognizedObjectObservation) -> Void]) {
+        self.model = model
+        self.labels = labels
+        self.actions = actions
+    }
 }
