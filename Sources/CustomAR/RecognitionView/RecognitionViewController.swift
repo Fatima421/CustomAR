@@ -101,7 +101,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if detectionTimer == nil {
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
-                    self?.detectionTimerExpired(objectBounds)
+                    let labelName = objectObservation.labels.first?.identifier
+                    if let labelName = labelName {
+                        self?.detectionTimerExpired(objectBounds, identifier: labelName)
+                    }
                 }
             } else {
                 detectionRestartTimer?.invalidate()
@@ -175,11 +178,13 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     
-    func detectionTimerExpired(_ objectBounds: CGRect) {
+    func detectionTimerExpired(_ objectBounds: CGRect, identifier: String) {
         if !hasNavigatedToPanoramaView {
             hasNavigatedToPanoramaView = true
-            zoomAnimation(duration: 0.8, scale: 6, objectBounds: objectBounds) {
-                self.navigateToPanoramaView()
+            zoomAnimation(duration: 0.8, scale: 6, objectBounds: objectBounds) { [weak self] in
+                if let image = self?.customARConfig?.objectLabelsWithImages[identifier] {
+                    self?.navigateToPanoramaView(image)
+                }
             }
         }
     }
@@ -266,10 +271,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }()
     
     // MARK: Navigation
-    func navigateToPanoramaView() {
+    func navigateToPanoramaView(_ image: UIImage) {
         DispatchQueue.main.async {
             let panoramaViewController = PanoramaViewController()
-            panoramaViewController.image = UIImage(named: "sagrada", in: Bundle.module, compatibleWith: nil)
+            panoramaViewController.image = image
             panoramaViewController.modalPresentationStyle = .overCurrentContext
             panoramaViewController.transitioningDelegate = self
             self.present(panoramaViewController, animated: true, completion: nil)
