@@ -9,12 +9,22 @@ import UIKit
 import CoreML
 import Vision
 
+public enum ActionType {
+    case panoramaView
+    case videoPlayer
+}
+
+public struct Action {
+    let type: ActionType
+    let media: Any
+}
+
 public struct CustomARConfig {
     let model: MLModel
-    let objectLabelsWithImages: [String: UIImage]
+    let objectLabelsWithActions: [String: [Action]]
 
-    public init(model: MLModel, objectLabelsWithImages: [String: UIImage]) {
+    public init(model: MLModel, objectLabelsWithActions: [String: [Action]]) {
         self.model = model
-        self.objectLabelsWithImages = objectLabelsWithImages
+        self.objectLabelsWithActions = objectLabelsWithActions
     }
 }

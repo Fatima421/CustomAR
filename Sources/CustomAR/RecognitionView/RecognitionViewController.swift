@@ -22,6 +22,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var detectionTime: Double?
     public var detectionInterval: Double?
     public var customARConfig: CustomARConfig?
+    private var currentActionIndex: Int?
     
     // MARK: - Life Cycle
     
@@ -182,10 +183,32 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         if !hasNavigatedToPanoramaView {
             hasNavigatedToPanoramaView = true
             zoomAnimation(duration: 0.8, scale: 6, objectBounds: objectBounds) { [weak self] in
-                if let image = self?.customARConfig?.objectLabelsWithImages[identifier] {
-                    self?.navigateToPanoramaView(image)
+                if let actions = self?.customARConfig?.objectLabelsWithActions[identifier] {
+                    self?.currentActionIndex = 0
+                    self?.executeCurrentAction(actions: actions)
                 }
             }
+        }
+    }
+    
+    func executeCurrentAction(actions: [Action]) {
+        guard let currentActionIndex = currentActionIndex, currentActionIndex < actions.count else { return }
+        
+        let action = actions[currentActionIndex]
+        
+        switch action.type {
+        case .panoramaView:
+            if let image = action.media as? UIImage {
+                self.navigateToPanoramaView(media: image)
+            }
+        case .videoPlayer:
+            if let videoURL = action.media as? URL {
+                self.navigateToVideoPlayer(media: videoURL)
+            }
+        }
+        
+        if let index = self.currentActionIndex {
+            self.currentActionIndex = index + 1
         }
     }
     
@@ -271,14 +294,18 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }()
     
     // MARK: Navigation
-    func navigateToPanoramaView(_ image: UIImage) {
+    func navigateToPanoramaView(media: UIImage) {
         DispatchQueue.main.async {
             let panoramaViewController = PanoramaViewController()
-            panoramaViewController.image = image
+            panoramaViewController.image = media
             panoramaViewController.modalPresentationStyle = .overCurrentContext
             panoramaViewController.transitioningDelegate = self
             self.present(panoramaViewController, animated: true, completion: nil)
         }
+    }
+    
+    func navigateToVideoPlayer(media: URL) {
+        // TODO: ADD VIDEO PLAYER
     }
     
     @objc func didTapClose() {
