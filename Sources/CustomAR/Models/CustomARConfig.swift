@@ -17,6 +17,11 @@ public enum ActionType {
 public struct Action {
     let type: ActionType
     let media: Any
+    
+    public init(type: ActionType, media: Any) {
+        self.type = type
+        self.media = media
+    }
 }
 
 public struct CustomARConfig {
