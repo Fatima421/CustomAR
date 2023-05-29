@@ -9,6 +9,7 @@ import UIKit
 import AVFoundation
 import Vision
 import CoreML
+import Combine
 
 open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
     
@@ -19,10 +20,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var hasNavigatedToPanoramaView: Bool = false
     private var detectionTimer: Timer?
     private var detectionRestartTimer: Timer?
+    private var currentActionIndex: Int?
+
     public var detectionTime: Double?
     public var detectionInterval: Double?
     public var customARConfig: CustomARConfig?
-    private var currentActionIndex: Int?
+    public let objectDetectedSubject = PassthroughSubject<DetectedObject, Never>()
     
     // MARK: - Life Cycle
     
@@ -182,13 +185,17 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func detectionTimerExpired(_ objectBounds: CGRect, identifier: String) {
         if !hasNavigatedToPanoramaView {
             hasNavigatedToPanoramaView = true
-            zoomAnimation(duration: 0.8, scale: 6, objectBounds: objectBounds) { [weak self] in
-                if let actions = self?.customARConfig?.objectLabelsWithActions[identifier] {
-                    self?.currentActionIndex = 0
-                    self?.executeCurrentAction(actions: actions)
-                }
+            objectDetected(identifier)
+            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
+                self.currentActionIndex = 0
+                self.executeCurrentAction(actions: actions)
             }
         }
+    }
+    
+    func objectDetected(_ identifier: String) {
+        let detectedObject = DetectedObject(identifier: identifier)
+        objectDetectedSubject.send(detectedObject)
     }
     
     func executeCurrentAction(actions: [Action]) {
