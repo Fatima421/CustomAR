@@ -86,15 +86,15 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupView() {
-        view.addSubview(closeButton)
-        
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            closeButton.widthAnchor.constraint(equalToConstant: 44),
-            closeButton.heightAnchor.constraint(equalToConstant: 44),
-            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
-        ])
+//        view.addSubview(closeButton)
+//
+//        closeButton.translatesAutoresizingMaskIntoConstraints = false
+//        NSLayoutConstraint.activate([
+//            closeButton.widthAnchor.constraint(equalToConstant: 44),
+//            closeButton.heightAnchor.constraint(equalToConstant: 44),
+//            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+//            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
+//        ])
     }
     
     func drawVisionRequestResults(_ results: [Any]) {
