@@ -19,6 +19,10 @@ open class ARViewController: UIViewController, AVCaptureVideoDataOutputSampleBuf
     var previewLayer: AVCaptureVideoPreviewLayer! = nil
     private let videoDataOutput = AVCaptureVideoDataOutput()
     
+    open override var prefersStatusBarHidden: Bool {
+        return true
+    }
+    
     private let videoDataOutputQueue = DispatchQueue(label: "VideoDataOutput", qos: .userInitiated, attributes: [], autoreleaseFrequency: .workItem)
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {

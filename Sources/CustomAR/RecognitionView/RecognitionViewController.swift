@@ -27,6 +27,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var customARConfig: CustomARConfig?
     public let objectDetectedSubject = PassthroughSubject<DetectedObject, Never>()
     
+    open override var prefersStatusBarHidden: Bool {
+        return true
+    }
+    
     // MARK: - Life Cycle
     
     open override func viewWillAppear(_ animated: Bool) {
