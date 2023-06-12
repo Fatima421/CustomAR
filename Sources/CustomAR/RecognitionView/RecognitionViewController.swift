@@ -36,15 +36,21 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         return true
     }
     
+    open override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+    
     // MARK: - Life Cycle
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        self.navigationController?.setNavigationBarHidden(true, animated: true)
         initialParameters()
     }
     
     open override func viewDidLoad() {
         super.viewDidLoad()
+        self.navigationController?.setNavigationBarHidden(true, animated: true)
         initialParameters()
     }
     
@@ -103,6 +109,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         if let backButton = customBackButton, let helpButton = customHelpButton {
             view.addSubview(backButton)
             view.addSubview(helpButton)
+            
+            backButton.addTarget(self, action: #selector(didTapBackButton), for: .touchUpInside)
+            helpButton.addTarget(self, action: #selector(didTapHelpIcon), for: .touchUpInside)
             
             backButton.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
