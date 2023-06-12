@@ -96,7 +96,9 @@ open class ARViewController: UIViewController, AVCaptureVideoDataOutputSampleBuf
     }
     
     func startCaptureSession() {
-        session.startRunning()
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.session.startRunning()
+        }
     }
     
     // Clean up capture setup
