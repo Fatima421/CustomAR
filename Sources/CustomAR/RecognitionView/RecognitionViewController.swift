@@ -21,11 +21,16 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var detectionTimer: Timer?
     private var detectionRestartTimer: Timer?
     private var currentActionIndex: Int?
-
+    
     public var detectionTime: Double?
     public var detectionInterval: Double?
     public var customARConfig: CustomARConfig?
     public let objectDetectedSubject = PassthroughSubject<DetectedObject, Never>()
+    
+    public var customBackButton: UIButton?
+    public var customHelpButton: UIButton?
+    public var backButtonTapped: (() -> Void)?
+    public var helpIconTapped: (() -> Void)?
     
     open override var prefersStatusBarHidden: Bool {
         return true
@@ -68,15 +73,15 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func setupVision() {
         if let model = customARConfig?.model {
             guard let objectDetectionModel = try? VNCoreMLModel(for: model) else { return }
-
+            
             let objectRecognition = VNCoreMLRequest(model: objectDetectionModel) { [weak self] request, error in
                 if let error = error {
                     print("Object detection error: \(error)")
                     return
                 }
-
+                
                 guard let results = request.results as? [VNRecognizedObjectObservation] else { return }
-
+                
                 DispatchQueue.main.async {
                     self?.drawVisionRequestResults(results)
                 }
@@ -86,15 +91,43 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupView() {
-//        view.addSubview(closeButton)
-//
-//        closeButton.translatesAutoresizingMaskIntoConstraints = false
-//        NSLayoutConstraint.activate([
-//            closeButton.widthAnchor.constraint(equalToConstant: 44),
-//            closeButton.heightAnchor.constraint(equalToConstant: 44),
-//            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
-//        ])
+        //        view.addSubview(closeButton)
+        //
+        //        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        //        NSLayoutConstraint.activate([
+        //            closeButton.widthAnchor.constraint(equalToConstant: 44),
+        //            closeButton.heightAnchor.constraint(equalToConstant: 44),
+        //            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+        //            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
+        //        ])
+        if let backButton = customBackButton, let helpButton = customHelpButton {
+            view.addSubview(backButton)
+            view.addSubview(helpButton)
+            
+            backButton.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                backButton.widthAnchor.constraint(equalToConstant: 44),
+                backButton.heightAnchor.constraint(equalToConstant: 44),
+                backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+                backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
+            ])
+            
+            helpButton.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                helpButton.widthAnchor.constraint(equalToConstant: 44),
+                helpButton.heightAnchor.constraint(equalToConstant: 44),
+                helpButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+                helpButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
+            ])
+        }
+    }
+    
+    @objc func didTapBackButton() {
+        backButtonTapped?()
+    }
+
+    @objc func didTapHelpIcon() {
+        helpIconTapped?()
     }
     
     func drawVisionRequestResults(_ results: [Any]) {
