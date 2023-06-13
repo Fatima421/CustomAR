@@ -44,6 +44,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         stopCaptureSession()
+        removeDetectionLayer()
     }
     
     open override func viewDidLoad() {
@@ -142,12 +143,17 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     @objc func didTapBackButton() {
-        detectionOverlay.removeFromSuperlayer()
+        removeDetectionLayer()
         backButtonTapped?()
     }
     
     @objc func didTapHelpIcon() {
+        removeDetectionLayer()
         helpIconTapped?()
+    }
+    
+    public func removeDetectionLayer() {
+        detectionOverlay.removeFromSuperlayer()
     }
     
     func drawVisionRequestResults(_ results: [Any]) {
