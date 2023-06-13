@@ -15,7 +15,7 @@ open class ARViewController: UIViewController, AVCaptureVideoDataOutputSampleBuf
     var rootLayer: CALayer! = nil
     
     private var previewView: UIView!
-    private let session = AVCaptureSession()
+    let session = AVCaptureSession()
     var previewLayer: AVCaptureVideoPreviewLayer! = nil
     private let videoDataOutput = AVCaptureVideoDataOutput()
     

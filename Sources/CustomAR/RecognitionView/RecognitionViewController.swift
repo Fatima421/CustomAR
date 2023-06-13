@@ -33,35 +33,45 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var helpIconTapped: (() -> Void)?
     public var capturedBuffer: CMSampleBuffer?
     
-    open override var prefersStatusBarHidden: Bool {
-        return true
-    }
-    
-    open override var preferredStatusBarStyle: UIStatusBarStyle {
-        return .lightContent
-    }
-    
     // MARK: - Life Cycle
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.setNavigationBarHidden(true, animated: true)
         initialParameters()
     }
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationController?.setNavigationBarHidden(true, animated: true)
         initialParameters()
     }
     
     func initialParameters() {
         hasNavigatedToPanoramaView = false
-        resetZoom()
         if detectionOverlay.superlayer == nil {
             rootLayer.addSublayer(detectionOverlay)
         }
         setupView()
+    }
+    
+    // MARK: - Capture Session
+    
+    public override func startCaptureSession() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            if !self.session.isRunning {
+                self.session.startRunning()
+            }
+        }
+    }
+    
+    public func stopCaptureSession() {
+        if session.isRunning {
+            session.stopRunning()
+        }
+    }
+    
+    private func restartCaptureSession() {
+        stopCaptureSession()
+        setupAVCapture()
     }
     
     func resetZoom() {
@@ -98,15 +108,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupView() {
-        //        view.addSubview(closeButton)
-        //
-        //        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        //        NSLayoutConstraint.activate([
-        //            closeButton.widthAnchor.constraint(equalToConstant: 44),
-        //            closeButton.heightAnchor.constraint(equalToConstant: 44),
-        //            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-        //            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
-        //        ])
         if let backButton = customBackButton, let helpButton = customHelpButton {
             view.addSubview(backButton)
             view.addSubview(helpButton)
@@ -135,7 +136,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     @objc func didTapBackButton() {
         backButtonTapped?()
     }
-
+    
     @objc func didTapHelpIcon() {
         helpIconTapped?()
     }
@@ -239,12 +240,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             }
         }
     }
-
+    
     func convert(cmage: CIImage) -> UIImage {
-         let context = CIContext(options: nil)
-         let cgImage = context.createCGImage(cmage, from: cmage.extent)!
-         let image = UIImage(cgImage: cgImage)
-         return image
+        let context = CIContext(options: nil)
+        let cgImage = context.createCGImage(cmage, from: cmage.extent)!
+        let image = UIImage(cgImage: cgImage)
+        return image
     }
     
     func objectDetected(_ identifier: String) {
