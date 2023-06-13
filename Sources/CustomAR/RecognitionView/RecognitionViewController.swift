@@ -37,11 +37,18 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        restartCaptureSession()
         initialParameters()
+    }
+    
+    open override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        stopCaptureSession()
     }
     
     open override func viewDidLoad() {
         super.viewDidLoad()
+        restartCaptureSession()
         initialParameters()
     }
     
