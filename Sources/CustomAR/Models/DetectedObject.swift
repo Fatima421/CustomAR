@@ -8,6 +8,6 @@
 import UIKit
 
 public struct DetectedObject {
-    let identifier: String
-    let image: UIImage?
+    public let identifier: String
+    public let image: UIImage?
 }
