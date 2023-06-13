@@ -31,6 +31,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var customHelpButton: UIButton?
     public var backButtonTapped: (() -> Void)?
     public var helpIconTapped: (() -> Void)?
+    public var capturedBuffer: CMSampleBuffer?
     
     open override var prefersStatusBarHidden: Bool {
         return true
@@ -238,10 +239,26 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             }
         }
     }
+
+    func convert(cmage: CIImage) -> UIImage {
+         let context = CIContext(options: nil)
+         let cgImage = context.createCGImage(cmage, from: cmage.extent)!
+         let image = UIImage(cgImage: cgImage)
+         return image
+    }
     
     func objectDetected(_ identifier: String) {
-        let detectedObject = DetectedObject(identifier: identifier)
-        objectDetectedSubject.send(detectedObject)
+        DispatchQueue.main.async {
+            guard
+                let capturedBuffer = self.capturedBuffer,
+                let imageBuffer = CMSampleBufferGetImageBuffer(capturedBuffer)
+            else { return }
+            
+            let ciimage = CIImage(cvPixelBuffer: imageBuffer)
+            let image = self.convert(cmage: ciimage)
+            let detectedObject = DetectedObject(identifier: identifier, image: image)
+            self.objectDetectedSubject.send(detectedObject)
+        }
     }
     
     func executeCurrentAction(actions: [Action]) {
@@ -268,6 +285,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public override func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
             return
+        }
+        
+        DispatchQueue.main.async {
+            self.capturedBuffer = sampleBuffer
         }
         
         let exifOrientation = exifOrientationFromDeviceOrientation()
