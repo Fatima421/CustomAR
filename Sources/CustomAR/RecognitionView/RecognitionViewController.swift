@@ -142,6 +142,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     @objc func didTapBackButton() {
+        detectionOverlay.removeFromSuperlayer()
         backButtonTapped?()
     }
     
