@@ -54,6 +54,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func initialParameters() {
         hasNavigatedToPanoramaView = false
+        resetZoom()
         if detectionOverlay.superlayer == nil {
             rootLayer.addSublayer(detectionOverlay)
         }
