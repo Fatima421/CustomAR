@@ -107,6 +107,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                         self?.detectionTimerExpired(objectBounds, identifier: labelName)
                     }
                 }
+                self.fireHaptic()
             } else {
                 detectionRestartTimer?.invalidate()
             }
@@ -178,6 +179,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
     }
     
+    func fireHaptic() {
+        let feedbackGenerator = UIImpactFeedbackGenerator(style: .heavy)
+        feedbackGenerator.impactOccurred()
+    }
     
     func detectionTimerExpired(_ objectBounds: CGRect, identifier: String) {
         if !hasNavigatedToPanoramaView {
