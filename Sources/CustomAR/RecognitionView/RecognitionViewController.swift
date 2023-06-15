@@ -99,6 +99,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             
             let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
             
+            self.fireHaptic()
+
             if detectionTimer == nil {
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
@@ -107,7 +109,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                         self?.detectionTimerExpired(objectBounds, identifier: labelName)
                     }
                 }
-                self.fireHaptic()
             } else {
                 detectionRestartTimer?.invalidate()
             }
