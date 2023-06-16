@@ -28,11 +28,13 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        restartCaptureSession()
         initialParameters()
     }
     
     open override func viewDidLoad() {
         super.viewDidLoad()
+        restartCaptureSession()
         initialParameters()
     }
     
@@ -43,6 +45,27 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             rootLayer.addSublayer(detectionOverlay)
         }
         setupView()
+    }
+    
+    // MARK: - Capture Session
+    
+    public override func startCaptureSession() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            if !self.session.isRunning {
+                self.session.startRunning()
+            }
+        }
+    }
+    
+    public func stopCaptureSession() {
+        if session.isRunning {
+            session.stopRunning()
+        }
+    }
+    
+    private func restartCaptureSession() {
+        stopCaptureSession()
+        setupAVCapture()
     }
     
     func resetZoom() {
@@ -99,9 +122,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             
             let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
             
-            self.fireHaptic()
-
             if detectionTimer == nil {
+                self.fireHaptic()
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
                     let labelName = objectObservation.labels.first?.identifier

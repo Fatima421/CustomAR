@@ -15,7 +15,7 @@ open class ARViewController: UIViewController, AVCaptureVideoDataOutputSampleBuf
     var rootLayer: CALayer! = nil
     
     private var previewView: UIView!
-    private let session = AVCaptureSession()
+    let session = AVCaptureSession()
     var previewLayer: AVCaptureVideoPreviewLayer! = nil
     private let videoDataOutput = AVCaptureVideoDataOutput()
     
@@ -92,7 +92,9 @@ open class ARViewController: UIViewController, AVCaptureVideoDataOutputSampleBuf
     }
     
     func startCaptureSession() {
-        session.startRunning()
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.session.startRunning()
+        }
     }
     
     // Clean up capture setup
