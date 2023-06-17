@@ -23,6 +23,30 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var detectionInterval: Double?
     public var customARConfig: CustomARConfig?
     private var currentActionIndex: Int?
+    private var infoLabel: UILabel = {
+        let label = UILabel()
+        label.backgroundColor = UIColor.gray.withAlphaComponent(0.7)
+        label.textColor = .white
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.textAlignment = .center
+        label.layer.cornerRadius = 10
+        label.layer.masksToBounds = true
+        label.isHidden = true
+        return label
+    }()
+    
+    private var infoIcon: UIImageView = {
+        var image: UIImageView?
+        if #available(iOS 13.0, *) {
+            image = UIImageView(image: UIImage(systemName: "info.circle"))
+        } else {
+            image = UIImageView(image: UIImage(named: "info"))
+        }
+        guard let image = UIImageView else { return }
+        image.tintColor = .white
+        image.isHidden = true
+        return image
+    }()
     
     // MARK: - Life Cycle
     
@@ -84,15 +108,15 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func setupVision() {
         if let model = customARConfig?.model {
             guard let objectDetectionModel = try? VNCoreMLModel(for: model) else { return }
-
+            
             let objectRecognition = VNCoreMLRequest(model: objectDetectionModel) { [weak self] request, error in
                 if let error = error {
                     print("Object detection error: \(error)")
                     return
                 }
-
+                
                 guard let results = request.results as? [VNRecognizedObjectObservation] else { return }
-
+                
                 DispatchQueue.main.async {
                     self?.drawVisionRequestResults(results)
                 }
@@ -111,6 +135,22 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
         ])
+        
+        view.addSubview(infoIcon)
+        view.addSubview(infoLabel)
+        
+        infoIcon.translatesAutoresizingMaskIntoConstraints = false
+        infoLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            infoIcon.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            infoIcon.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            infoIcon.widthAnchor.constraint(equalToConstant: 24),
+            infoIcon.heightAnchor.constraint(equalToConstant: 24),
+            
+            infoLabel.leadingAnchor.constraint(equalTo: infoIcon.trailingAnchor, constant: 8),
+            infoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            infoLabel.centerYAnchor.constraint(equalTo: infoIcon.centerYAnchor),
+        ])
     }
     
     func drawVisionRequestResults(_ results: [Any]) {
@@ -124,9 +164,14 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             
             if detectionTimer == nil {
                 self.fireHaptic()
+                let labelName = objectObservation.labels.first?.identifier
+                DispatchQueue.main.async {
+                    self.infoLabel.text = "Detecting: \(labelName ?? "")"
+                    self.infoLabel.isHidden = false
+                    self.infoIcon.isHidden = false
+                }
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
-                    let labelName = objectObservation.labels.first?.identifier
                     if let labelName = labelName {
                         self?.detectionTimerExpired(objectBounds, identifier: labelName)
                     }
@@ -337,6 +382,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     @objc func didTapClose() {
-        self.dismiss(animated: true)
+        self.dismiss(animated: true) {
+            self.infoLabel.isHidden = true
+            self.infoIcon.isHidden = true
+        }
     }
 }
