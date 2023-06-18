@@ -174,6 +174,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval ?? 0.5, repeats: false) { [weak self] _ in
                 self?.detectionTimer?.invalidate()
                 self?.detectionTimer = nil
+                self?.resetDetectionLabel()
             }
             
             let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
