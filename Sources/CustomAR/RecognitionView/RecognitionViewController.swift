@@ -23,8 +23,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var detectionInterval: Double?
     public var customARConfig: CustomARConfig?
     private var currentActionIndex: Int?
-    private var infoLabel: UILabel?
-    private var infoIcon: UIImageView?
+    public var infoLabel: UILabel?
+    public var infoIcon: UIImageView?
     
     // MARK: - Life Cycle
     
