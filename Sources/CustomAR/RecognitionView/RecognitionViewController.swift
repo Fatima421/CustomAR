@@ -23,30 +23,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var detectionInterval: Double?
     public var customARConfig: CustomARConfig?
     private var currentActionIndex: Int?
-    private var infoLabel: UILabel = {
-        let label = UILabel()
-        label.backgroundColor = UIColor.gray.withAlphaComponent(0.7)
-        label.textColor = .white
-        label.font = UIFont.systemFont(ofSize: 16)
-        label.textAlignment = .center
-        label.layer.cornerRadius = 10
-        label.layer.masksToBounds = true
-        label.isHidden = true
-        return label
-    }()
-    
-    private var infoIcon: UIImageView = {
-        let image: UIImage?
-        if #available(iOS 13.0, *) {
-            image = UIImage(systemName: "info.circle")
-        } else {
-            image = UIImage(named: "info")
-        }
-        let imageView = UIImageView(image: image)
-        imageView.tintColor = .white
-        imageView.isHidden = true
-        return imageView
-    }()
+    private var infoLabel: UILabel?
+    private var infoIcon: UIImageView?
     
     // MARK: - Life Cycle
     
@@ -136,7 +114,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
         ])
         
-        view.addSubview(infoIcon)
+        guard let infoIcon = infoIcon, let infoLabel = infoLabel else { return }
+        
+        infoLabel.addSubview(infoIcon)
         view.addSubview(infoLabel)
         
         infoIcon.translatesAutoresizingMaskIntoConstraints = false
@@ -166,9 +146,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 self.fireHaptic()
                 let labelName = objectObservation.labels.first?.identifier
                 DispatchQueue.main.async {
-                    self.infoLabel.text = "Detecting: \(labelName ?? "")"
-                    self.infoLabel.isHidden = false
-                    self.infoIcon.isHidden = false
+                    self.infoLabel?.text = "\(self.infoLabel?.text) \(labelName ?? "")"
+                    self.infoLabel?.isHidden = false
+                    self.infoIcon?.isHidden = false
                 }
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
@@ -383,8 +363,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     @objc func didTapClose() {
         self.dismiss(animated: true) {
-            self.infoLabel.isHidden = true
-            self.infoIcon.isHidden = true
+            self.infoLabel?.isHidden = true
+            self.infoIcon?.isHidden = true
         }
     }
 }
