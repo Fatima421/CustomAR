@@ -138,6 +138,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             infoLabel.leadingAnchor.constraint(equalTo: infoIcon.trailingAnchor, constant: 8),
             infoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             infoLabel.centerYAnchor.constraint(equalTo: infoIcon.centerYAnchor),
+            infoLabel.heightAnchor.constraint(equalToConstant: 40),
         ])
     }
     
