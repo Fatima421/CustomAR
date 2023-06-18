@@ -25,6 +25,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var currentActionIndex: Int?
     public var infoLabel: UILabel?
     public var infoIcon: UIImageView?
+    private var infoLabelInitialText: String?
     
     // MARK: - Life Cycle
     
@@ -41,12 +42,19 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func initialParameters() {
+        self.infoLabel?.text = infoLabelInitialText
         hasNavigatedToPanoramaView = false
         resetZoom()
         if detectionOverlay.superlayer == nil {
             rootLayer.addSublayer(detectionOverlay)
         }
         setupView()
+    }
+    
+    func resetDetectionLabel() {
+        self.infoLabel?.text = infoLabelInitialText
+        infoLabel?.isHidden = true
+        infoIcon?.isHidden = true
     }
     
     // MARK: - Capture Session
@@ -145,10 +153,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if detectionTimer == nil {
                 self.fireHaptic()
                 let labelName = objectObservation.labels.first?.identifier
-                DispatchQueue.main.async {
-                    self.infoLabel?.text = "\(self.infoLabel?.text) \(labelName ?? "")"
-                    self.infoLabel?.isHidden = false
-                    self.infoIcon?.isHidden = false
+                if let infoLabel = self.infoLabel, infoLabel.isHidden {
+                    DispatchQueue.main.async {
+                        infoLabel.text = "\(self.infoLabelInitialText ?? "") \(labelName ?? "")"
+                        infoLabel.isHidden = false
+                        self.infoIcon?.isHidden = false
+                    }
                 }
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
@@ -233,6 +243,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func detectionTimerExpired(_ objectBounds: CGRect, identifier: String) {
+        resetDetectionLabel()
         if !hasNavigatedToPanoramaView {
             hasNavigatedToPanoramaView = true
             zoomAnimation(duration: 0.8, scale: 6, objectBounds: objectBounds) { [weak self] in
@@ -363,8 +374,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     @objc func didTapClose() {
         self.dismiss(animated: true) {
-            self.infoLabel?.isHidden = true
-            self.infoIcon?.isHidden = true
+            self.resetDetectionLabel()
         }
     }
 }
