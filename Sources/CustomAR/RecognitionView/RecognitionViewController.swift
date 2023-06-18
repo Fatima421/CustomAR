@@ -201,13 +201,18 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         for _ in 0..<numberOfDots {
             let x = bounds.origin.x + CGFloat.random(in: 0..<bounds.width)
             let y = bounds.origin.y + CGFloat.random(in: 0..<bounds.height)
+            let randomDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius) // Randomize dot size
             path.move(to: CGPoint(x: x, y: y))
-            path.addArc(withCenter: CGPoint(x: x, y: y), radius: dotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
+            path.addArc(withCenter: CGPoint(x: x, y: y), radius: randomDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
         }
         
         let shape = CAShapeLayer()
         shape.path = path.cgPath
-        shape.fillColor = UIColor.yellow.cgColor
+        shape.fillColor = UIColor.white.cgColor
+        shape.shadowColor = UIColor.white.cgColor
+        shape.shadowRadius = 3.0
+        shape.shadowOpacity = 0.6
+        shape.shadowOffset = CGSize(width: 2, height: 2)
         shapeLayer.addSublayer(shape)
         
         let maskLayer = CAShapeLayer()
