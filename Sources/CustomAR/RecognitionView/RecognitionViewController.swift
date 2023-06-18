@@ -144,6 +144,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
+        var remainingTime = detectionTime ?? 2.0
         
         if let objectObservation = results.compactMap({ $0 as? VNRecognizedObjectObservation })
             .filter({ $0.confidence > 0.5 })
@@ -161,7 +162,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                         self.infoIcon?.isHidden = false
                     }
                 }
-                detectionTimer = Timer.scheduledTimer(withTimeInterval: detectionTime ?? 2.0, repeats: false) { [weak self] _ in
+                detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
                     if let labelName = labelName {
                         self?.detectionTimerExpired(objectBounds, identifier: labelName)
@@ -172,6 +173,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             }
             
             detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval ?? 0.5, repeats: false) { [weak self] _ in
+                if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
+                    remainingTime = remainingTimeInterval
+                }
                 self?.detectionTimer?.invalidate()
                 self?.detectionTimer = nil
                 self?.resetDetectionLabel()
@@ -183,7 +187,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
         self.updateLayerGeometry()
     }
-    
+
     func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 1.0, density: CGFloat = 0.015) -> CALayer {
         let shapeLayer = CALayer()
         shapeLayer.bounds = bounds
