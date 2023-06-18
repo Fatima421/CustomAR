@@ -188,38 +188,46 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         self.updateLayerGeometry()
     }
 
-    func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 1.0, density: CGFloat = 0.015) -> CALayer {
+    func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 2.0, density: CGFloat = 0.01) -> CALayer {
         let shapeLayer = CALayer()
         shapeLayer.bounds = bounds
         shapeLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
         shapeLayer.name = "Found Object"
         
-        let path = UIBezierPath()
-        
         let numberOfDots = Int(bounds.width * bounds.height * density)
-        
+
+        // Create shadow layer
+        let shadowPath = UIBezierPath()
         for _ in 0..<numberOfDots {
             let x = bounds.origin.x + CGFloat.random(in: 0..<bounds.width)
             let y = bounds.origin.y + CGFloat.random(in: 0..<bounds.height)
-            let randomDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius) // Randomize dot size
+            let shadowDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius)
+            shadowPath.move(to: CGPoint(x: x, y: y))
+            shadowPath.addArc(withCenter: CGPoint(x: x, y: y), radius: shadowDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
+        }
+        let shadowShape = CAShapeLayer()
+        shadowShape.path = shadowPath.cgPath
+        shadowShape.fillColor = UIColor.white.withAlphaComponent(0.6).cgColor
+        shapeLayer.addSublayer(shadowShape)
+
+        let path = UIBezierPath()
+        for _ in 0..<numberOfDots {
+            let x = bounds.origin.x + CGFloat.random(in: 0..<bounds.width)
+            let y = bounds.origin.y + CGFloat.random(in: 0..<bounds.height)
+            let randomDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius)
             path.move(to: CGPoint(x: x, y: y))
             path.addArc(withCenter: CGPoint(x: x, y: y), radius: randomDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
         }
-        
         let shape = CAShapeLayer()
         shape.path = path.cgPath
         shape.fillColor = UIColor.white.cgColor
-        shape.shadowColor = UIColor.white.cgColor
-        shape.shadowRadius = 3.0
-        shape.shadowOpacity = 0.6
-        shape.shadowOffset = CGSize(width: 2, height: 2)
         shapeLayer.addSublayer(shape)
         
         let maskLayer = CAShapeLayer()
         let maskPath = UIBezierPath(roundedRect: bounds, cornerRadius: 10)
         maskLayer.path = maskPath.cgPath
         shapeLayer.mask = maskLayer
-        
+
         return shapeLayer
     }
     
