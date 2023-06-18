@@ -36,16 +36,16 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }()
     
     private var infoIcon: UIImageView = {
-        var image: UIImageView?
+        let image: UIImage?
         if #available(iOS 13.0, *) {
-            image = UIImageView(image: UIImage(systemName: "info.circle"))
+            image = UIImage(systemName: "info.circle")
         } else {
-            image = UIImageView(image: UIImage(named: "info"))
+            image = UIImage(named: "info")
         }
-        guard let image = UIImageView else { return }
-        image.tintColor = .white
-        image.isHidden = true
-        return image
+        let imageView = UIImageView(image: image)
+        imageView.tintColor = .white
+        imageView.isHidden = true
+        return imageView
     }()
     
     // MARK: - Life Cycle
