@@ -188,7 +188,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         self.updateLayerGeometry()
     }
 
-    func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 2.0, density: CGFloat = 0.01) -> CALayer {
+    func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 1.0, density: CGFloat = 0.015) -> CALayer {
         let shapeLayer = CALayer()
         shapeLayer.bounds = bounds
         shapeLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
