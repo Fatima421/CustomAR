@@ -25,7 +25,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var currentActionIndex: Int?
     public var infoLabel: UILabel?
     public var infoIcon: UIImageView?
-    private var infoLabelInitialText: String?
+    public var infoLabelInitialText: String?
+    private let infoContainer = UIView()
     
     // MARK: - Life Cycle
     
@@ -42,7 +43,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func initialParameters() {
-        self.infoLabel?.text = infoLabelInitialText
         hasNavigatedToPanoramaView = false
         resetZoom()
         if detectionOverlay.superlayer == nil {
@@ -113,7 +113,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     private func setupView() {
         view.addSubview(closeButton)
-        
+
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             closeButton.widthAnchor.constraint(equalToConstant: 44),
@@ -121,26 +121,41 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
         ])
-        
+
         guard let infoIcon = infoIcon, let infoLabel = infoLabel else { return }
+
+        let infoStackView = UIStackView(arrangedSubviews: [infoIcon, infoLabel])
+        infoStackView.axis = .horizontal
+        infoStackView.spacing = 10
         
-        infoLabel.addSubview(infoIcon)
-        view.addSubview(infoLabel)
+        infoContainer.backgroundColor = UIColor.gray.withAlphaComponent(0.8)
+        infoContainer.layer.cornerRadius = 10
+        infoContainer.layer.masksToBounds = true
+        infoContainer.isHidden = true
+        infoContainer.addSubview(infoStackView)
+
+        view.addSubview(infoContainer)
         
+        infoContainer.translatesAutoresizingMaskIntoConstraints = false
+        infoStackView.translatesAutoresizingMaskIntoConstraints = false
         infoIcon.translatesAutoresizingMaskIntoConstraints = false
         infoLabel.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
-            infoIcon.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            infoIcon.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            infoIcon.widthAnchor.constraint(equalToConstant: 24),
-            infoIcon.heightAnchor.constraint(equalToConstant: 24),
+            infoContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            infoContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            infoContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            infoContainer.heightAnchor.constraint(equalToConstant: 40),
             
-            infoLabel.leadingAnchor.constraint(equalTo: infoIcon.trailingAnchor, constant: 8),
-            infoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            infoLabel.centerYAnchor.constraint(equalTo: infoIcon.centerYAnchor),
-            infoLabel.heightAnchor.constraint(equalToConstant: 40),
+            infoStackView.leadingAnchor.constraint(equalTo: infoContainer.leadingAnchor, constant: 8),
+            infoStackView.topAnchor.constraint(equalTo: infoContainer.topAnchor, constant: 8),
+            infoStackView.bottomAnchor.constraint(equalTo: infoContainer.bottomAnchor, constant: -8),
+            
+            infoIcon.widthAnchor.constraint(equalToConstant: 24),
+            infoIcon.heightAnchor.constraint(equalToConstant: 24)
         ])
     }
+
     
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
@@ -160,6 +175,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                         infoLabel.text = "\(self.infoLabelInitialText ?? "") \(labelName ?? "")"
                         infoLabel.isHidden = false
                         self.infoIcon?.isHidden = false
+                        self.infoContainer.isHidden = false
                     }
                 }
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
