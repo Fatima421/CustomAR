@@ -55,6 +55,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         self.infoLabel?.text = infoLabelInitialText
         infoLabel?.isHidden = true
         infoIcon?.isHidden = true
+        infoContainer.isHidden = true
     }
     
     // MARK: - Capture Session
