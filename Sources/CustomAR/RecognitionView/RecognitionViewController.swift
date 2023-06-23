@@ -230,13 +230,13 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
 
         let shadowLayer = CAShapeLayer()
         shadowLayer.path = shadowPath.cgPath
-        shadowLayer.fillColor = UIColor.black.cgColor
-        shadowLayer.opacity = 0.2
+        shadowLayer.fillColor = UIColor.white.cgColor
+        shadowLayer.opacity = 0.4
         shapeLayer.addSublayer(shadowLayer)
 
         let dotLayer = CAShapeLayer()
         dotLayer.path = actualPath.cgPath
-        dotLayer.fillColor = UIColor.red.cgColor
+        dotLayer.fillColor = UIColor.white.cgColor
         shapeLayer.addSublayer(dotLayer)
 
         return shapeLayer
