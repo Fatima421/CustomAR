@@ -218,9 +218,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         for _ in 0..<numberOfDots {
             let x = CGFloat.randomGaussian() * bounds.width/4 + bounds.midX
             let y = CGFloat.randomGaussian() * bounds.height/4 + bounds.midY
-            let shadowDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius)
             let actualDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius)
-            
+            let shadowDotRadius = actualDotRadius * 2
+
             shadowPath.move(to: CGPoint(x: x, y: y))
             shadowPath.addArc(withCenter: CGPoint(x: x, y: y), radius: shadowDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
             
@@ -230,7 +230,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
 
         let shadowLayer = CAShapeLayer()
         shadowLayer.path = shadowPath.cgPath
-        shadowLayer.fillColor = UIColor.white.cgColor
+        shadowLayer.fillColor = UIColor.red.cgColor
         shadowLayer.opacity = 0.4
         shapeLayer.addSublayer(shadowLayer)
 
