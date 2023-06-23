@@ -210,40 +210,34 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         shapeLayer.bounds = bounds
         shapeLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
         shapeLayer.name = "Found Object"
-        
         let numberOfDots = Int(bounds.width * bounds.height * density)
 
-        // Create shadow layer
         let shadowPath = UIBezierPath()
+        let actualPath = UIBezierPath()
+
         for _ in 0..<numberOfDots {
-            let x = bounds.origin.x + CGFloat.random(in: 0..<bounds.width)
-            let y = bounds.origin.y + CGFloat.random(in: 0..<bounds.height)
+            let x = CGFloat.randomGaussian() * bounds.width/4 + bounds.midX
+            let y = CGFloat.randomGaussian() * bounds.height/4 + bounds.midY
             let shadowDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius)
+            let actualDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius)
+            
             shadowPath.move(to: CGPoint(x: x, y: y))
             shadowPath.addArc(withCenter: CGPoint(x: x, y: y), radius: shadowDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
+            
+            actualPath.move(to: CGPoint(x: x, y: y))
+            actualPath.addArc(withCenter: CGPoint(x: x, y: y), radius: actualDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
         }
-        let shadowShape = CAShapeLayer()
-        shadowShape.path = shadowPath.cgPath
-        shadowShape.fillColor = UIColor.white.withAlphaComponent(0.6).cgColor
-        shapeLayer.addSublayer(shadowShape)
 
-        let path = UIBezierPath()
-        for _ in 0..<numberOfDots {
-            let x = bounds.origin.x + CGFloat.random(in: 0..<bounds.width)
-            let y = bounds.origin.y + CGFloat.random(in: 0..<bounds.height)
-            let randomDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius)
-            path.move(to: CGPoint(x: x, y: y))
-            path.addArc(withCenter: CGPoint(x: x, y: y), radius: randomDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
-        }
-        let shape = CAShapeLayer()
-        shape.path = path.cgPath
-        shape.fillColor = UIColor.white.cgColor
-        shapeLayer.addSublayer(shape)
-        
-        let maskLayer = CAShapeLayer()
-        let maskPath = UIBezierPath(roundedRect: bounds, cornerRadius: 10)
-        maskLayer.path = maskPath.cgPath
-        shapeLayer.mask = maskLayer
+        let shadowLayer = CAShapeLayer()
+        shadowLayer.path = shadowPath.cgPath
+        shadowLayer.fillColor = UIColor.black.cgColor
+        shadowLayer.opacity = 0.2
+        shapeLayer.addSublayer(shadowLayer)
+
+        let dotLayer = CAShapeLayer()
+        dotLayer.path = actualPath.cgPath
+        dotLayer.fillColor = UIColor.red.cgColor
+        shapeLayer.addSublayer(dotLayer)
 
         return shapeLayer
     }
@@ -412,5 +406,16 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         self.dismiss(animated: true) {
             self.resetDetectionLabel()
         }
+    }
+}
+
+extension CGFloat {
+    static func randomGaussian(mean: CGFloat = 0.0, standardDeviation: CGFloat = 1.0) -> CGFloat {
+        let x1 = CGFloat(arc4random()) / CGFloat(UInt32.max)
+        let x2 = CGFloat(arc4random()) / CGFloat(UInt32.max)
+        
+        let z = sqrt(-2.0 * log(x1)) * cos(2.0 * .pi * x2)
+        
+        return z * standardDeviation + mean
     }
 }
