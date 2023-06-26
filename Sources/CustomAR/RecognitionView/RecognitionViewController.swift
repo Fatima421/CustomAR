@@ -120,6 +120,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupMotionDetection() {
+        self.showCameraMovementAlert?()
+
         motionManager.deviceMotionUpdateInterval = 0.1  // update every 0.1 seconds
         motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
             guard let deviceMotion = deviceMotion else { return }
