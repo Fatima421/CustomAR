@@ -9,24 +9,30 @@ import UIKit
 import AVFoundation
 import Vision
 import CoreML
+import CoreMotion
 
 open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
     
     // MARK: - Properties
+    
+    public var detectionTime: Double?
+    public var detectionInterval: Double?
+    public var customARConfig: CustomARConfig?
+    public var infoLabel: UILabel?
+    public var infoIcon: UIImageView?
+    public var infoLabelInitialText: String?
+    public var showCameraMovementAlert: (() -> Void)?
     
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
     private var hasNavigatedToPanoramaView: Bool = false
     private var detectionTimer: Timer?
     private var detectionRestartTimer: Timer?
-    public var detectionTime: Double?
-    public var detectionInterval: Double?
-    public var customARConfig: CustomARConfig?
     private var currentActionIndex: Int?
-    public var infoLabel: UILabel?
-    public var infoIcon: UIImageView?
-    public var infoLabelInitialText: String?
     private let infoContainer = UIView()
+    private let motionManager = CMMotionManager()
+    private var lastMotionTime: Date?
+    private let movementTimeout: TimeInterval = 5.0
     
     // MARK: - Life Cycle
     
@@ -109,6 +115,28 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 }
             }
             self.requests = [objectRecognition]
+        }
+    }
+    
+    private func setupMotionDetection() {
+        motionManager.deviceMotionUpdateInterval = 0.1  // update every 0.1 seconds
+        motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
+            guard let deviceMotion = deviceMotion else { return }
+
+            // Determine whether there was a significant motion
+            if abs(deviceMotion.userAcceleration.x) > 0.05 ||
+               abs(deviceMotion.userAcceleration.y) > 0.05 ||
+               abs(deviceMotion.userAcceleration.z) > 0.05 {
+                self.lastMotionTime = Date()
+            }
+
+            // Check whether the device has not been moved for 'movementTimeout' seconds
+            if let lastMotionTime = self.lastMotionTime,
+               Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
+                DispatchQueue.main.async {
+                    self.showCameraMovementAlert?()
+                }
+            }
         }
     }
     
