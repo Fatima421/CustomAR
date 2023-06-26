@@ -55,6 +55,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             rootLayer.addSublayer(detectionOverlay)
         }
         setupView()
+        setupMotionDetection()
     }
     
     func resetDetectionLabel() {
