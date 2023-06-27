@@ -37,6 +37,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var movementTimeoutTimer: Timer?
     private var currentIdentifier: String?
     private var hasShownCameraMovementAlert: Bool = false
+    private var panoramaViewController: PanoramaViewController?
     
     // MARK: - Life Cycle
     
@@ -436,12 +437,26 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         return button
     }()
     
+    func preLoadPanoramaView(media: UIImage) {
+        panoramaViewController = PanoramaViewController()
+        panoramaViewController?.image = media
+        panoramaViewController?.loadViewIfNeeded()
+    }
+    
     // MARK: Navigation
+    func navigateToPanoramaView() {
+        guard let panoramaViewController = self.panoramaViewController else { return }
+        DispatchQueue.main.async {
+            panoramaViewController.modalPresentationStyle = .overCurrentContext
+            panoramaViewController.transitioningDelegate = self
+            self.present(panoramaViewController, animated: true, completion: nil)
+        }
+    }
+    
     func navigateToPanoramaView(media: UIImage) {
         DispatchQueue.main.async {
             let panoramaViewController = PanoramaViewController()
             panoramaViewController.image = media
-            panoramaViewController.loadViewIfNeeded()
             panoramaViewController.modalPresentationStyle = .overCurrentContext
             panoramaViewController.transitioningDelegate = self
             self.present(panoramaViewController, animated: true, completion: nil)
@@ -453,7 +468,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         playerViewController.player = player
         playerViewController.modalPresentationStyle = .fullScreen
         playerViewController.modalPresentationCapturesStatusBarAppearance = true
-                
+        
         self.present(playerViewController, animated: true) {
             if let player = playerViewController.player {
                 player.play()
@@ -476,6 +491,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         self.dismiss(animated: true) { [weak self] in
             guard let self = self, let identifier = self.currentIdentifier else { return }
             if let actions = self.customARConfig?.objectLabelsWithActions[identifier], let currentActionIndex = self.currentActionIndex, currentActionIndex < actions.count {
+                let nextAction = actions[currentActionIndex]
+                if nextAction.type == .panoramaView, let media = nextAction.media as? UIImage {
+                    self.preLoadPanoramaView(media: media)
+                }
                 self.executeCurrentAction(actions: actions)
             }
         }
