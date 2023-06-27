@@ -36,7 +36,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private let movementTimeout: TimeInterval = 5.0
     private var movementTimeoutTimer: Timer?
     private var currentIdentifier: String?
-    private lazy var panoramaViewController = PanoramaViewController()
+    private var hasShownCameraMovementAlert: Bool = false
     
     // MARK: - Life Cycle
     
@@ -58,6 +58,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func initialParameters() {
         hasNavigatedToPanoramaView = false
+        hasShownCameraMovementAlert = false
         resetZoom()
         if detectionOverlay.superlayer == nil {
             rootLayer.addSublayer(detectionOverlay)
@@ -128,22 +129,25 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupMotionDetection() {
-        motionManager.deviceMotionUpdateInterval = 0.1
-        motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
-            guard let deviceMotion = deviceMotion else { return }
-            
-            if abs(deviceMotion.userAcceleration.x) > 0.1 ||
-                abs(deviceMotion.userAcceleration.y) > 0.1 ||
-                abs(deviceMotion.userAcceleration.z) > 0.1 {
+        if !hasShownCameraMovementAlert {
+            motionManager.deviceMotionUpdateInterval = 0.1
+            motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
+                guard let deviceMotion = deviceMotion else { return }
                 
-                self.lastMotionTime = Date()
-                self.resetMovementTimeoutTimer()
-            }
-            
-            if let lastMotionTime = self.lastMotionTime,
-               Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
-                self.showCameraMovementAlert?()
-                self.lastMotionTime = Date()
+                if abs(deviceMotion.userAcceleration.x) > 0.05 ||
+                    abs(deviceMotion.userAcceleration.y) > 0.05 ||
+                    abs(deviceMotion.userAcceleration.z) > 0.05 {
+                    
+                    self.lastMotionTime = Date()
+                    self.resetMovementTimeoutTimer()
+                }
+                
+                if let lastMotionTime = self.lastMotionTime,
+                   Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
+                    self.showCameraMovementAlert?()
+                    self.lastMotionTime = Date()
+                    self.hasShownCameraMovementAlert = true
+                }
             }
         }
     }
@@ -435,10 +439,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     // MARK: Navigation
     func navigateToPanoramaView(media: UIImage) {
         DispatchQueue.main.async {
-            self.panoramaViewController.image = media
-            self.panoramaViewController.modalPresentationStyle = .overCurrentContext
-            self.panoramaViewController.transitioningDelegate = self
-            self.present(self.panoramaViewController, animated: true, completion: nil)
+            let panoramaViewController = PanoramaViewController()
+            panoramaViewController.image = media
+            panoramaViewController.loadViewIfNeeded()
+            panoramaViewController.modalPresentationStyle = .overCurrentContext
+            panoramaViewController.transitioningDelegate = self
+            self.present(panoramaViewController, animated: true, completion: nil)
         }
     }
     
