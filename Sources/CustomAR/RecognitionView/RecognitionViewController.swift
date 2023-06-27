@@ -10,6 +10,7 @@ import AVFoundation
 import Vision
 import CoreML
 import CoreMotion
+import AVKit
 
 open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
     
@@ -438,7 +439,17 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func navigateToVideoPlayer(media: URL) {
-        // TODO: ADD VIDEO PLAYER
+        let player = AVPlayer(url: media)
+        let playerViewController = AVPlayerViewController()
+        playerViewController.player = player
+        playerViewController.modalPresentationStyle = .fullScreen
+        playerViewController.modalPresentationCapturesStatusBarAppearance = true
+
+        self.present(playerViewController, animated: true) {
+            if let player = playerViewController.player {
+                player.play()
+            }
+        }
     }
     
     @objc func didTapClose() {
