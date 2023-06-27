@@ -336,8 +336,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 self.navigateToPanoramaView(media: image)
             }
         case .videoPlayer:
-            if let videoURL = action.media as? URL {
-                self.navigateToVideoPlayer(media: videoURL)
+            if let player = action.media as? AVPlayer {
+                self.navigateToVideoPlayer(with: player)
             }
         }
         
@@ -438,8 +438,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
     }
     
-    func navigateToVideoPlayer(media: URL) {
-        let player = AVPlayer(url: media)
+    func navigateToVideoPlayer(with player: AVPlayer) {
         let playerViewController = AVPlayerViewController()
         playerViewController.player = player
         playerViewController.modalPresentationStyle = .fullScreen
