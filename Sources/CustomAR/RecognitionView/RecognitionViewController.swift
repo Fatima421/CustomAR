@@ -33,6 +33,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private let motionManager = CMMotionManager()
     private var lastMotionTime: Date?
     private let movementTimeout: TimeInterval = 5.0
+    private var movementTimeoutTimer: Timer?
     
     // MARK: - Life Cycle
     
@@ -120,25 +121,32 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupMotionDetection() {
-        self.showCameraMovementAlert?()
-
-        motionManager.deviceMotionUpdateInterval = 0.1  // update every 0.1 seconds
+        motionManager.deviceMotionUpdateInterval = 0.1
         motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
             guard let deviceMotion = deviceMotion else { return }
 
-            // Determine whether there was a significant motion
-            if abs(deviceMotion.userAcceleration.x) > 0.05 ||
-               abs(deviceMotion.userAcceleration.y) > 0.05 ||
-               abs(deviceMotion.userAcceleration.z) > 0.05 {
+            if abs(deviceMotion.userAcceleration.x) > 0.1 ||
+                abs(deviceMotion.userAcceleration.y) > 0.1 ||
+                abs(deviceMotion.userAcceleration.z) > 0.1 {
+                
                 self.lastMotionTime = Date()
+                self.resetMovementTimeoutTimer()
             }
 
-            // Check whether the device has not been moved for 'movementTimeout' seconds
             if let lastMotionTime = self.lastMotionTime,
                Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
-                DispatchQueue.main.async {
-                    self.showCameraMovementAlert?()
-                }
+                self.showCameraMovementAlert?()
+                self.lastMotionTime = Date()
+            }
+        }
+    }
+    
+    private func resetMovementTimeoutTimer() {
+        movementTimeoutTimer?.invalidate()
+
+        movementTimeoutTimer = Timer.scheduledTimer(withTimeInterval: movementTimeout, repeats: false) { [weak self] timer in
+            DispatchQueue.main.async {
+                self?.showCameraMovementAlert?()
             }
         }
     }
