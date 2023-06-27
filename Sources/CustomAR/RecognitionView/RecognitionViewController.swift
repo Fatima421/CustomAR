@@ -35,6 +35,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var lastMotionTime: Date?
     private let movementTimeout: TimeInterval = 5.0
     private var movementTimeoutTimer: Timer?
+    private var currentIdentifier: String?
     
     // MARK: - Life Cycle
     
@@ -48,6 +49,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         super.viewDidLoad()
         restartCaptureSession()
         initialParameters()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
     
     func initialParameters() {
@@ -125,7 +130,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         motionManager.deviceMotionUpdateInterval = 0.1
         motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
             guard let deviceMotion = deviceMotion else { return }
-
+            
             if abs(deviceMotion.userAcceleration.x) > 0.1 ||
                 abs(deviceMotion.userAcceleration.y) > 0.1 ||
                 abs(deviceMotion.userAcceleration.z) > 0.1 {
@@ -133,7 +138,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 self.lastMotionTime = Date()
                 self.resetMovementTimeoutTimer()
             }
-
+            
             if let lastMotionTime = self.lastMotionTime,
                Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
                 self.showCameraMovementAlert?()
@@ -144,7 +149,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     private func resetMovementTimeoutTimer() {
         movementTimeoutTimer?.invalidate()
-
+        
         movementTimeoutTimer = Timer.scheduledTimer(withTimeInterval: movementTimeout, repeats: false) { [weak self] timer in
             DispatchQueue.main.async {
                 self?.showCameraMovementAlert?()
@@ -154,7 +159,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     private func setupView() {
         view.addSubview(closeButton)
-
+        
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             closeButton.widthAnchor.constraint(equalToConstant: 44),
@@ -162,9 +167,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
         ])
-
+        
         guard let infoIcon = infoIcon, let infoLabel = infoLabel else { return }
-
+        
         let infoStackView = UIStackView(arrangedSubviews: [infoIcon, infoLabel])
         infoStackView.axis = .horizontal
         infoStackView.spacing = 10
@@ -174,7 +179,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         infoContainer.layer.masksToBounds = true
         infoContainer.isHidden = true
         infoContainer.addSubview(infoStackView)
-
+        
         view.addSubview(infoContainer)
         
         infoContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -196,7 +201,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             infoIcon.heightAnchor.constraint(equalToConstant: 24)
         ])
     }
-
+    
     
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
@@ -244,41 +249,41 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
         self.updateLayerGeometry()
     }
-
+    
     func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 1.0, density: CGFloat = 0.015) -> CALayer {
         let shapeLayer = CALayer()
         shapeLayer.bounds = bounds
         shapeLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
         shapeLayer.name = "Found Object"
         let numberOfDots = Int(bounds.width * bounds.height * density)
-
+        
         let shadowPath = UIBezierPath()
         let actualPath = UIBezierPath()
-
+        
         for _ in 0..<numberOfDots {
             let x = CGFloat.randomGaussian() * bounds.width/4 + bounds.midX
             let y = CGFloat.randomGaussian() * bounds.height/4 + bounds.midY
             let actualDotRadius = CGFloat.random(in: 0.5 * dotRadius...1.5 * dotRadius)
             let shadowDotRadius = actualDotRadius * 3
-
+            
             shadowPath.move(to: CGPoint(x: x, y: y))
             shadowPath.addArc(withCenter: CGPoint(x: x, y: y), radius: shadowDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
             
             actualPath.move(to: CGPoint(x: x, y: y))
             actualPath.addArc(withCenter: CGPoint(x: x, y: y), radius: actualDotRadius, startAngle: 0, endAngle: 2 * .pi, clockwise: true)
         }
-
+        
         let shadowLayer = CAShapeLayer()
         shadowLayer.path = shadowPath.cgPath
         shadowLayer.fillColor = UIColor.white.cgColor
         shadowLayer.opacity = 0.2
         shapeLayer.addSublayer(shadowLayer)
-
+        
         let dotLayer = CAShapeLayer()
         dotLayer.path = actualPath.cgPath
         dotLayer.fillColor = UIColor.white.cgColor
         shapeLayer.addSublayer(dotLayer)
-
+        
         return shapeLayer
     }
     
@@ -316,11 +321,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         resetDetectionLabel()
         if !hasNavigatedToPanoramaView {
             hasNavigatedToPanoramaView = true
-            zoomAnimation(duration: 0.8, scale: 6, objectBounds: objectBounds) { [weak self] in
-                if let actions = self?.customARConfig?.objectLabelsWithActions[identifier] {
-                    self?.currentActionIndex = 0
-                    self?.executeCurrentAction(actions: actions)
-                }
+            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
+                self.currentIdentifier = identifier
+                self.currentActionIndex = 0
+                self.executeCurrentAction(actions: actions)
             }
         }
     }
@@ -443,17 +447,30 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         playerViewController.player = player
         playerViewController.modalPresentationStyle = .fullScreen
         playerViewController.modalPresentationCapturesStatusBarAppearance = true
-
+                
         self.present(playerViewController, animated: true) {
             if let player = playerViewController.player {
                 player.play()
             }
         }
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
     
     @objc func didTapClose() {
         self.dismiss(animated: true) {
             self.resetDetectionLabel()
+        }
+    }
+    
+    @objc func playerDidFinishPlaying(note: NSNotification) {
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        
+        self.dismiss(animated: true) { [weak self] in
+            guard let self = self, let identifier = self.currentIdentifier else { return }
+            if let actions = self.customARConfig?.objectLabelsWithActions[identifier], let currentActionIndex = self.currentActionIndex, currentActionIndex < actions.count {
+                self.executeCurrentAction(actions: actions)
+            }
         }
     }
 }
