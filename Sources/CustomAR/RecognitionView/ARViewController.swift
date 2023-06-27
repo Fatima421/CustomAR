@@ -91,12 +91,6 @@ open class ARViewController: UIViewController, AVCaptureVideoDataOutputSampleBuf
         rootLayer.addSublayer(previewLayer)
     }
     
-    func startCaptureSession() {
-        DispatchQueue.global(qos: .userInitiated).async {
-            self.session.startRunning()
-        }
-    }
-    
     // Clean up capture setup
     func teardownAVCapture() {
         previewLayer.removeFromSuperlayer()

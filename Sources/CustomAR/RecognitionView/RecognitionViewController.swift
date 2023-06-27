@@ -78,7 +78,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     // MARK: - Capture Session
     
-    public override func startCaptureSession() {
+    public func startCaptureSession() {
         DispatchQueue.global(qos: .userInitiated).async {
             if !self.session.isRunning {
                 self.session.startRunning()
