@@ -38,6 +38,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var currentIdentifier: String?
     private var hasShownCameraMovementAlert: Bool = false
     private var panoramaViewController: PanoramaViewController?
+    private lazy var playerViewController = CustomAVPlayerViewController()
     
     // MARK: - Life Cycle
     
@@ -465,13 +466,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func navigateToVideoPlayer(with player: AVPlayer) {
-        let playerViewController = CustomAVPlayerViewController()
         playerViewController.player = player
         playerViewController.modalPresentationStyle = .fullScreen
         playerViewController.modalPresentationCapturesStatusBarAppearance = true
         
         self.present(playerViewController, animated: true) {
-            if let player = playerViewController.player {
+            if let player = self.playerViewController.player {
                 player.play()
             }
         }
@@ -488,6 +488,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        
+        if let player = playerViewController.player {
+            player.seek(to: .zero)
+        }
         
         self.dismiss(animated: true) { [weak self] in
             guard let self = self, let identifier = self.currentIdentifier else { return }
