@@ -148,6 +148,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                     self.showCameraMovementAlert?()
                     self.lastMotionTime = Date()
                     self.hasShownCameraMovementAlert = true
+                    self.motionManager.stopDeviceMotionUpdates()
                 }
             }
         }
@@ -494,8 +495,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 let nextAction = actions[currentActionIndex]
                 if nextAction.type == .panoramaView, let media = nextAction.media as? UIImage {
                     self.preLoadPanoramaView(media: media)
+                    self.executeCurrentAction(actions: actions)
+                } else {
+                    self.executeCurrentAction(actions: actions)
                 }
-                self.executeCurrentAction(actions: actions)
             }
         }
     }
