@@ -7,25 +7,33 @@
 
 import UIKit
 
+public protocol RotationRestrictable {
+    var restrictRotation: UIInterfaceOrientationMask { get set }
+}
+
 class PanoramaViewController: UIViewController {
     
     // MARK: Properties
     var image: UIImage?
     var panoramaView: CTPanoramaView!
     
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        return .landscape
-    }
-    
     // MARK: Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        rescaleOrientation(with: .landscape)
         
         guard let image = image else { return }
         panoramaView = CTPanoramaView(frame: view.bounds, image: image)
         panoramaView?.controlMethod = .both
         
         view.addSubview(panoramaView)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        rescaleOrientation(with: .landscape)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -37,6 +45,8 @@ class PanoramaViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        
+        rescaleOrientation(with: .portrait)
     }
     
     private func setupView() {
@@ -47,6 +57,11 @@ class PanoramaViewController: UIViewController {
             closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
         ])
+    }
+    
+    private func rescaleOrientation(with orientation: UIInterfaceOrientationMask) {
+        var appDelegate = UIApplication.shared.delegate as! RotationRestrictable
+        appDelegate.restrictRotation = orientation
     }
     
     // MARK: Style
