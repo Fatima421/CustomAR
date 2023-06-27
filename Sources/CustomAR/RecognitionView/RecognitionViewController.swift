@@ -443,7 +443,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func navigateToVideoPlayer(with player: AVPlayer) {
-        let playerViewController = AVPlayerViewController()
+        let playerViewController = CustomAVPlayerViewController()
         playerViewController.player = player
         playerViewController.modalPresentationStyle = .fullScreen
         playerViewController.modalPresentationCapturesStatusBarAppearance = true
@@ -483,5 +483,11 @@ extension CGFloat {
         let z = sqrt(-2.0 * log(x1)) * cos(2.0 * .pi * x2)
         
         return z * standardDeviation + mean
+    }
+}
+
+class CustomAVPlayerViewController: AVPlayerViewController {
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .landscape
     }
 }

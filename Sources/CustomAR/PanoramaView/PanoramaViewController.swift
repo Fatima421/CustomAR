@@ -13,6 +13,10 @@ class PanoramaViewController: UIViewController {
     var image: UIImage?
     var panoramaView: CTPanoramaView!
     
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .landscape
+    }
+    
     // MARK: Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
