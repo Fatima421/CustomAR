@@ -95,6 +95,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private func restartCaptureSession() {
         stopCaptureSession()
         setupAVCapture()
+        startCaptureSession()
     }
     
     func resetZoom() {
