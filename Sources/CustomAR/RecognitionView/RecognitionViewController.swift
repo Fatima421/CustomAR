@@ -131,28 +131,28 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupMotionDetection() {
-        if !hasShownCameraMovementAlert {
-            motionManager.deviceMotionUpdateInterval = 0.1
-            motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
-                guard let deviceMotion = deviceMotion else { return }
-                
-                if abs(deviceMotion.userAcceleration.x) > 0.05 ||
-                    abs(deviceMotion.userAcceleration.y) > 0.05 ||
-                    abs(deviceMotion.userAcceleration.z) > 0.05 {
-                    
-                    self.lastMotionTime = Date()
-                    self.resetMovementTimeoutTimer()
-                }
-                
-                if let lastMotionTime = self.lastMotionTime,
-                   Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
-                    self.showCameraMovementAlert?()
-                    self.lastMotionTime = Date()
-                    self.hasShownCameraMovementAlert = true
-                    self.motionManager.stopDeviceMotionUpdates()
-                }
-            }
-        }
+//        if !hasShownCameraMovementAlert {
+//            motionManager.deviceMotionUpdateInterval = 0.1
+//            motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
+//                guard let deviceMotion = deviceMotion else { return }
+//
+//                if abs(deviceMotion.userAcceleration.x) > 0.05 ||
+//                    abs(deviceMotion.userAcceleration.y) > 0.05 ||
+//                    abs(deviceMotion.userAcceleration.z) > 0.05 {
+//
+//                    self.lastMotionTime = Date()
+//                    self.resetMovementTimeoutTimer()
+//                }
+//
+//                if let lastMotionTime = self.lastMotionTime,
+//                   Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
+//                    self.showCameraMovementAlert?()
+//                    self.lastMotionTime = Date()
+//                    self.hasShownCameraMovementAlert = true
+//                    self.motionManager.stopDeviceMotionUpdates()
+//                }
+//            }
+//        }
     }
     
     private func resetMovementTimeoutTimer() {
