@@ -89,6 +89,8 @@ open class ARViewController: UIViewController, AVCaptureVideoDataOutputSampleBuf
         rootLayer = previewView.layer
         previewLayer.frame = rootLayer.bounds
         rootLayer.addSublayer(previewLayer)
+        
+        startCaptureSession()
     }
     
     func startCaptureSession() {

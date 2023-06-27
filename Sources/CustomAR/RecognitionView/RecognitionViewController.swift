@@ -36,6 +36,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private let movementTimeout: TimeInterval = 5.0
     private var movementTimeoutTimer: Timer?
     private var currentIdentifier: String?
+    private lazy var panoramaViewController = PanoramaViewController()
     
     // MARK: - Life Cycle
     
@@ -99,8 +100,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             CATransaction.setAnimationDuration(0.25)
             
             self.previewLayer?.transform = CATransform3DIdentity
-            self.previewLayer?.anchorPoint = CGPoint(x: 0.5, y: 0.5) // Reset anchorPoint
-            self.previewLayer?.position = CGPoint(x: self.rootLayer.bounds.midX, y: self.rootLayer.bounds.midY) // Reset position
+            self.previewLayer?.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+            self.previewLayer?.position = CGPoint(x: self.rootLayer.bounds.midX, y: self.rootLayer.bounds.midY)
             
             CATransaction.commit()
         }
@@ -434,11 +435,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     // MARK: Navigation
     func navigateToPanoramaView(media: UIImage) {
         DispatchQueue.main.async {
-            let panoramaViewController = PanoramaViewController()
-            panoramaViewController.image = media
-            panoramaViewController.modalPresentationStyle = .overCurrentContext
-            panoramaViewController.transitioningDelegate = self
-            self.present(panoramaViewController, animated: true, completion: nil)
+            self.panoramaViewController.image = media
+            self.panoramaViewController.modalPresentationStyle = .overCurrentContext
+            self.panoramaViewController.transitioningDelegate = self
+            self.present(self.panoramaViewController, animated: true, completion: nil)
         }
     }
     
@@ -457,6 +457,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
     
+    // MARK: Actions
     @objc func didTapClose() {
         self.dismiss(animated: true) {
             self.resetDetectionLabel()
