@@ -88,6 +88,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func startNoDetectionTimer() {
         if noDetectionTimer == nil {
+            print("--- aaaa: \(noDetectionTimer?.timeInterval)")
             noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
                 guard let self = self else { return }
                 self.arFunctionalityDelegate?.detectionView.isHidden = false
@@ -259,6 +260,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             
             noDetectionTimer?.invalidate()
             noDetectionTimer = nil
+            self.arFunctionalityDelegate?.detectionView.isHidden = true
+            startNoDetectionTimer()
             
             let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
             
