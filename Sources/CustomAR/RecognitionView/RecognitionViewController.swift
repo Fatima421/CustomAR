@@ -175,6 +175,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     private func resetMovementTimeoutTimer() {
         movementTimeoutTimer?.invalidate()
+        self.movementTimeoutTimer = nil
         
         movementTimeoutTimer = Timer.scheduledTimer(withTimeInterval: movementTimeout, repeats: false) { [weak self] timer in
             DispatchQueue.main.async {
@@ -257,7 +258,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
             
             if detectionTimer == nil {
+                noDetectionTimer?.invalidate()
+                noDetectionTimer = nil
+                
                 self.fireHaptic()
+                
                 let labelName = objectObservation.labels.first?.identifier
                 if let infoLabel = self.infoLabel, infoLabel.isHidden {
                     DispatchQueue.main.async {
