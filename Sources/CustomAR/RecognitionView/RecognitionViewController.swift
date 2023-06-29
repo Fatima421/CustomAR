@@ -87,9 +87,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func startNoDetectionTimer() {
-        noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
-            guard let self = self else { return }
-            self.arFunctionalityDelegate?.detectionView.isHidden = false
+        if noDetectionTimer == nil {
+            noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
+                guard let self = self else { return }
+                self.arFunctionalityDelegate?.detectionView.isHidden = false
+            }
         }
     }
     
@@ -255,12 +257,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             .filter({ $0.confidence > 0.5 })
             .max(by: { $0.confidence < $1.confidence }) {
             
+            noDetectionTimer?.invalidate()
+            noDetectionTimer = nil
+            
             let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
             
             if detectionTimer == nil {
-                noDetectionTimer?.invalidate()
-                noDetectionTimer = nil
-                
                 self.fireHaptic()
                 
                 let labelName = objectObservation.labels.first?.identifier
