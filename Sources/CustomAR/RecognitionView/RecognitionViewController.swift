@@ -23,6 +23,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var infoIcon: UIImageView?
     public var infoLabelInitialText: String?
     public var showCameraMovementAlert: (() -> Void)?
+    public var detectionButton: UIButton?
+    public var arDetailScreen: String?
     
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
@@ -39,6 +41,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var hasShownCameraMovementAlert: Bool = false
     private var panoramaViewController: PanoramaViewController?
     private lazy var playerViewController = CustomAVPlayerViewController()
+    private var noDetectionTimer: Timer?
     
     // MARK: - Life Cycle
     
@@ -59,6 +62,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func initialParameters() {
+        detectionButton?.isHidden = true
         hasNavigatedToPanoramaView = false
         hasShownCameraMovementAlert = false
         resetZoom()
@@ -66,6 +70,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             rootLayer.addSublayer(detectionOverlay)
         }
         setupView()
+        startNoDetectionTimer()
         setupMotionDetection()
     }
     
@@ -74,6 +79,13 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         infoLabel?.isHidden = true
         infoIcon?.isHidden = true
         infoContainer.isHidden = true
+    }
+    
+    func startNoDetectionTimer() {
+        noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            self.detectionButton?.isHidden = false
+        }
     }
     
     // MARK: - Capture Session
@@ -209,6 +221,21 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             infoIcon.widthAnchor.constraint(equalToConstant: 24),
             infoIcon.heightAnchor.constraint(equalToConstant: 24)
         ])
+        
+        if var detectionButton = self.detectionButton {
+            detectionButton = UIButton(type: .system)
+            detectionButton.addTarget(self, action: #selector(detectionButtonTapped), for: .touchUpInside)
+            view.addSubview(detectionButton)
+            
+            detectionButton.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                detectionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+                detectionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+                detectionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+                detectionButton.widthAnchor.constraint(equalToConstant: 52),
+                detectionButton.heightAnchor.constraint(equalToConstant: 52)
+            ])
+        }
     }
     
     
@@ -387,7 +414,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func setupLayers() {
-        detectionOverlay = CALayer() // container layer that has all the renderings of the observations
+        detectionOverlay = CALayer()
         detectionOverlay.name = "DetectionOverlay"
         detectionOverlay.bounds = CGRect(x: 0.0,
                                          y: 0.0,
@@ -411,9 +438,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         CATransaction.begin()
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
         
-        // rotate the layer into screen orientation and scale and mirror
         detectionOverlay.setAffineTransform(CGAffineTransform(rotationAngle: CGFloat(.pi / 2.0)).scaledBy(x: scale, y: -scale))
-        // center the layer
         detectionOverlay.position = CGPoint(x: bounds.midX, y: bounds.midY)
         
         CATransaction.commit()
@@ -484,6 +509,15 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     @objc func didTapClose() {
         self.dismiss(animated: true) {
             self.resetDetectionLabel()
+        }
+    }
+    
+    @objc func detectionButtonTapped() {
+        guard let identifier = arDetailScreen else { return }
+        if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
+            self.currentIdentifier = identifier
+            self.currentActionIndex = 0
+            self.executeCurrentAction(actions: actions)
         }
     }
     
