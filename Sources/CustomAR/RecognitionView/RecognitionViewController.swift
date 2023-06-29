@@ -12,6 +12,11 @@ import CoreML
 import CoreMotion
 import AVKit
 
+public protocol ARFunctionalityProtocol {
+    var detectionView: UIView { get }
+    func didTapDetectionButton()
+}
+
 open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
     
     // MARK: - Properties
@@ -23,8 +28,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var infoIcon: UIImageView?
     public var infoLabelInitialText: String?
     public var showCameraMovementAlert: (() -> Void)?
-    public var detectionButton: UIButton?
     public var arDetailScreen: String?
+    public var arFunctionalityDelegate: ARFunctionalityProtocol?
     
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
@@ -62,7 +67,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func initialParameters() {
-        detectionButton?.isHidden = true
+        arFunctionalityDelegate?.detectionView.isHidden = true
         hasNavigatedToPanoramaView = false
         hasShownCameraMovementAlert = false
         resetZoom()
@@ -84,7 +89,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func startNoDetectionTimer() {
         noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
             guard let self = self else { return }
-            self.detectionButton?.isHidden = false
+            self.arFunctionalityDelegate?.detectionView.isHidden = false
         }
     }
     
@@ -221,21 +226,24 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             infoIcon.widthAnchor.constraint(equalToConstant: 24),
             infoIcon.heightAnchor.constraint(equalToConstant: 24)
         ])
-        
-        if var detectionButton = self.detectionButton {
-            detectionButton = UIButton(type: .system)
-            detectionButton.addTarget(self, action: #selector(detectionButtonTapped), for: .touchUpInside)
-            view.addSubview(detectionButton)
-            
-            detectionButton.translatesAutoresizingMaskIntoConstraints = false
-            NSLayoutConstraint.activate([
-                detectionButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-                detectionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-                detectionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-                detectionButton.widthAnchor.constraint(equalToConstant: 52),
-                detectionButton.heightAnchor.constraint(equalToConstant: 52)
-            ])
-        }
+        setupARFunctionality()
+    }
+    
+    
+    public func setupARFunctionality() {
+        guard let delegate = arFunctionalityDelegate else { return }
+
+        view.addSubview(delegate.detectionView)
+        delegate.detectionView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            delegate.detectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            delegate.detectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            delegate.detectionView.topAnchor.constraint(equalTo: view.topAnchor),
+            delegate.detectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        delegate.didTapDetectionButton()
     }
     
     
@@ -512,7 +520,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
     }
     
-    @objc func detectionButtonTapped() {
+    public func detectionButtonTapped() {
         guard let identifier = arDetailScreen else { return }
         if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
             self.currentIdentifier = identifier
