@@ -88,7 +88,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func startNoDetectionTimer() {
         if noDetectionTimer == nil {
-            print("--- aaaa: \(noDetectionTimer?.timeInterval)")
             noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
                 guard let self = self else { return }
                 self.arFunctionalityDelegate?.detectionView.isHidden = false
@@ -152,28 +151,28 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupMotionDetection() {
-//        if !hasShownCameraMovementAlert {
-//            motionManager.deviceMotionUpdateInterval = 0.1
-//            motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
-//                guard let deviceMotion = deviceMotion else { return }
-//
-//                if abs(deviceMotion.userAcceleration.x) > 0.05 ||
-//                    abs(deviceMotion.userAcceleration.y) > 0.05 ||
-//                    abs(deviceMotion.userAcceleration.z) > 0.05 {
-//
-//                    self.lastMotionTime = Date()
-//                    self.resetMovementTimeoutTimer()
-//                }
-//
-//                if let lastMotionTime = self.lastMotionTime,
-//                   Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
-//                    self.showCameraMovementAlert?()
-//                    self.lastMotionTime = Date()
-//                    self.hasShownCameraMovementAlert = true
-//                    self.motionManager.stopDeviceMotionUpdates()
-//                }
-//            }
-//        }
+        if !hasShownCameraMovementAlert {
+            motionManager.deviceMotionUpdateInterval = 0.1
+            motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
+                guard let deviceMotion = deviceMotion else { return }
+
+                if abs(deviceMotion.userAcceleration.x) > 0.05 ||
+                    abs(deviceMotion.userAcceleration.y) > 0.05 ||
+                    abs(deviceMotion.userAcceleration.z) > 0.05 {
+
+                    self.lastMotionTime = Date()
+                    self.resetMovementTimeoutTimer()
+                }
+
+                if let lastMotionTime = self.lastMotionTime,
+                   Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
+                    self.showCameraMovementAlert?()
+                    self.lastMotionTime = Date()
+                    self.hasShownCameraMovementAlert = true
+                    self.motionManager.stopDeviceMotionUpdates()
+                }
+            }
+        }
     }
     
     private func resetMovementTimeoutTimer() {
@@ -243,7 +242,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
 
         NSLayoutConstraint.activate([
             delegate.detectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: padding),
-            delegate.detectionView.topAnchor.constraint(equalTo: view.topAnchor, constant: padding)
+            delegate.detectionView.topAnchor.constraint(equalTo: view.topAnchor, constant: padding),
+            delegate.detectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
 
         delegate.didTapDetectionButton()
