@@ -244,8 +244,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             delegate.detectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             delegate.detectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
-
-        delegate.didTapDetectionButton()
     }
 
     func drawVisionRequestResults(_ results: [Any]) {
