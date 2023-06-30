@@ -240,8 +240,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         delegate.detectionView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            delegate.detectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            delegate.detectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            delegate.detectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            delegate.detectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             delegate.detectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
 
