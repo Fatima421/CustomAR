@@ -235,21 +235,19 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     public func setupARFunctionality() {
         guard let delegate = arFunctionalityDelegate else { return }
-        let padding: CGFloat = 10
 
         view.addSubview(delegate.detectionView)
         delegate.detectionView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            delegate.detectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: padding),
-            delegate.detectionView.topAnchor.constraint(equalTo: view.topAnchor, constant: padding),
+            delegate.detectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            delegate.detectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             delegate.detectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
 
         delegate.didTapDetectionButton()
     }
-    
-    
+
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
         var remainingTime = detectionTime ?? 2.0
