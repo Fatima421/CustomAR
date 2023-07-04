@@ -278,7 +278,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 // Start the 2.0 seconds timer
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
-                    self?.detectionOverlay.removeFromSuperlayer()
+                    self?.detectionOverlay.sublayers = nil
                     print("labelName: \(labelName)")
                     if let labelName = labelName {
                         print("detectionTimerExpired")
@@ -296,13 +296,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             detectionOverlay.addSublayer(shapeLayer)
             
         } else {
-            print("he dejado de detectar")
             if detectionRestartTimer == nil {
-                print("ha empezado el tiempo")
                 detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval, repeats: false) { [weak self] _ in
                     if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
                         remainingTime = remainingTimeInterval
                     }
+                    print("ha expirado el restart tiempo")
                     self?.detectionTimer?.invalidate()
                     self?.detectionTimer = nil
                     self?.resetDetectionLabel()
@@ -392,6 +391,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
                 self.currentIdentifier = identifier
                 self.currentActionIndex = 0
+                print("--- executeCurrentAction")
                 self.executeCurrentAction(actions: actions)
             }
         }
