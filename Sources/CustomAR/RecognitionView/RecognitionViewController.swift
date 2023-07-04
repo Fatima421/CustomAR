@@ -165,6 +165,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                     self.resetMovementTimeoutTimer()
                 }
             }
+            resetMovementTimeoutTimer()
         }
     }
 
