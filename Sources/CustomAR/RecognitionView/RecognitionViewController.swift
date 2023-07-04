@@ -152,39 +152,38 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     private func setupMotionDetection() {
-        if !hasShownCameraMovementAlert {
-            motionManager.deviceMotionUpdateInterval = 0.1
-            motionManager.startDeviceMotionUpdates(to: .main) { [weak self] (deviceMotion, error) in
-                guard let self = self else { return }
-                guard let deviceMotion = deviceMotion else { return }
+        motionManager.deviceMotionUpdateInterval = 0.1
+        lastMotionTime = Date()
+        motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
+            guard let deviceMotion = deviceMotion else { return }
 
-                if abs(deviceMotion.userAcceleration.x) > 0.05 ||
-                    abs(deviceMotion.userAcceleration.y) > 0.05 ||
-                    abs(deviceMotion.userAcceleration.z) > 0.05 {
+            if abs(deviceMotion.userAcceleration.x) > 0.05 ||
+                abs(deviceMotion.userAcceleration.y) > 0.05 ||
+                abs(deviceMotion.userAcceleration.z) > 0.05 {
 
-                    self.resetMovementTimeoutTimer()
-                }
+                self.lastMotionTime = Date()
+                self.resetMovementTimeoutTimer()
             }
-            resetMovementTimeoutTimer()
+
+            if let lastMotionTime = self.lastMotionTime,
+               Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
+                self.showCameraMovementAlert?()
+                self.lastMotionTime = Date()
+            }
         }
     }
 
-    
     private func resetMovementTimeoutTimer() {
         movementTimeoutTimer?.invalidate()
         self.movementTimeoutTimer = nil
-        
-        movementTimeoutTimer = Timer.scheduledTimer(withTimeInterval: movementTimeout, repeats: false) { [weak self] timer in
+            
+        movementTimeoutTimer = Timer.scheduledTimer(withTimeInterval: movementTimeout, repeats: true) { [weak self] timer in
             DispatchQueue.main.async {
-                if !(self?.hasShownCameraMovementAlert ?? true) {
-                    self?.showCameraMovementAlert?()
-                    self?.hasShownCameraMovementAlert = true
-                    self?.motionManager.stopDeviceMotionUpdates()
-                }
+                self?.showCameraMovementAlert?()
             }
         }
     }
-    
+
     private func setupView() {
         view.addSubview(closeButton)
         
