@@ -248,6 +248,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         detectionOverlay.sublayers = nil
         var remainingTime = detectionTime ?? 2.0
         
+        CATransaction.begin()
+        CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
+        
         if let objectObservation = results.compactMap({ $0 as? VNRecognizedObjectObservation })
             .filter({ $0.confidence > 0.5 })
             .max(by: { $0.confidence < $1.confidence }) {
@@ -279,6 +282,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 }
             } else {
                 detectionRestartTimer?.invalidate()
+                detectionRestartTimer = nil
             }
             
             detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval ?? 0.5, repeats: false) { [weak self] _ in
@@ -295,6 +299,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             detectionOverlay.addSublayer(shapeLayer)
         }
         self.updateLayerGeometry()
+        CATransaction.commit()
     }
     
     func getLabelNameTitle(_ label: String?) -> String? {
