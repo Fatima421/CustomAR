@@ -21,8 +21,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     // MARK: - Properties
     
-    public var detectionTime: Double?
-    public var detectionInterval: Double?
+    public var detectionTime: Double = 2.0
+    public var detectionInterval: Double = 0.5
     public var customARConfig: CustomARConfig?
     public var infoLabel: UILabel?
     public var infoIcon: UIImageView?
@@ -246,7 +246,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
 
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
-        var remainingTime = detectionTime ?? 2.0
+        var remainingTime = detectionTime
         
         CATransaction.begin()
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
@@ -265,6 +265,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if detectionTimer == nil {
                 self.fireHaptic()
                 
+                // Show the info label
                 let labelName = getLabelNameTitle(objectObservation.labels.first?.identifier)
                 if let infoLabel = self.infoLabel, infoLabel.isHidden {
                     DispatchQueue.main.async {
@@ -274,29 +275,39 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                         self.infoContainer.isHidden = false
                     }
                 }
+                
+                // Start the 2.0 seconds timer
                 detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
                     self?.detectionOverlay.removeFromSuperlayer()
+                    print("labelName: \(labelName)")
                     if let labelName = labelName {
+                        print("detectionTimerExpired")
                         self?.detectionTimerExpired(objectBounds, identifier: labelName)
                     }
                 }
+                detectionRestartTimer?.invalidate()
+                detectionRestartTimer = nil
             } else {
                 detectionRestartTimer?.invalidate()
                 detectionRestartTimer = nil
             }
             
-            detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval ?? 0.5, repeats: false) { [weak self] _ in
-                if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
-                    remainingTime = remainingTimeInterval
-                }
-                self?.detectionTimer?.invalidate()
-                self?.detectionTimer = nil
-                self?.resetDetectionLabel()
-            }
-            
             let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
-            
             detectionOverlay.addSublayer(shapeLayer)
+            
+        } else {
+            print("he dejado de detectar")
+            if detectionRestartTimer == nil {
+                print("ha empezado el tiempo")
+                detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval, repeats: false) { [weak self] _ in
+                    if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
+                        remainingTime = remainingTimeInterval
+                    }
+                    self?.detectionTimer?.invalidate()
+                    self?.detectionTimer = nil
+                    self?.resetDetectionLabel()
+                }
+            }
         }
         self.updateLayerGeometry()
         CATransaction.commit()
