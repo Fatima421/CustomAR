@@ -30,6 +30,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var showCameraMovementAlert: (() -> Void)?
     public var arDetailScreen: String?
     public var arFunctionalityDelegate: ARFunctionalityProtocol?
+    public var titlesDict: [String: String]?
     
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
@@ -88,7 +89,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func startNoDetectionTimer() {
         if noDetectionTimer == nil {
-            noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
+            noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
                 guard let self = self else { return }
                 self.arFunctionalityDelegate?.detectionView.isHidden = false
             }
@@ -153,27 +154,20 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private func setupMotionDetection() {
         if !hasShownCameraMovementAlert {
             motionManager.deviceMotionUpdateInterval = 0.1
-            motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
+            motionManager.startDeviceMotionUpdates(to: .main) { [weak self] (deviceMotion, error) in
+                guard let self = self else { return }
                 guard let deviceMotion = deviceMotion else { return }
 
                 if abs(deviceMotion.userAcceleration.x) > 0.05 ||
                     abs(deviceMotion.userAcceleration.y) > 0.05 ||
                     abs(deviceMotion.userAcceleration.z) > 0.05 {
 
-                    self.lastMotionTime = Date()
                     self.resetMovementTimeoutTimer()
-                }
-
-                if let lastMotionTime = self.lastMotionTime,
-                   Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
-                    self.showCameraMovementAlert?()
-                    self.lastMotionTime = Date()
-                    self.hasShownCameraMovementAlert = true
-                    self.motionManager.stopDeviceMotionUpdates()
                 }
             }
         }
     }
+
     
     private func resetMovementTimeoutTimer() {
         movementTimeoutTimer?.invalidate()
@@ -181,7 +175,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         movementTimeoutTimer = Timer.scheduledTimer(withTimeInterval: movementTimeout, repeats: false) { [weak self] timer in
             DispatchQueue.main.async {
-                self?.showCameraMovementAlert?()
+                if !(self?.hasShownCameraMovementAlert ?? true) {
+                    self?.showCameraMovementAlert?()
+                    self?.hasShownCameraMovementAlert = true
+                    self?.motionManager.stopDeviceMotionUpdates()
+                }
             }
         }
     }
@@ -264,10 +262,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if detectionTimer == nil {
                 self.fireHaptic()
                 
-                let labelName = objectObservation.labels.first?.identifier
+                let labelName = getLabelNameTitle(objectObservation.labels.first?.identifier)
                 if let infoLabel = self.infoLabel, infoLabel.isHidden {
                     DispatchQueue.main.async {
-                        infoLabel.text = "\(self.infoLabelInitialText ?? "") \(labelName ?? "")"
+                        infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
                         infoLabel.isHidden = false
                         self.infoIcon?.isHidden = false
                         self.infoContainer.isHidden = false
@@ -297,6 +295,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             detectionOverlay.addSublayer(shapeLayer)
         }
         self.updateLayerGeometry()
+    }
+    
+    func getLabelNameTitle(_ label: String?) -> String? {
+        guard let label = label, let title = titlesDict?[label] else { return "" }
+        return title
     }
     
     func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 1.0, density: CGFloat = 0.015) -> CALayer {
