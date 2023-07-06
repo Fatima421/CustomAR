@@ -64,6 +64,13 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        
+        detectionTimer?.invalidate()
+        detectionTimer = nil
+
+        detectionRestartTimer?.invalidate()
+        detectionRestartTimer = nil
+        
         detectionOverlay.sublayers = nil
     }
     
