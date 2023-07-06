@@ -63,6 +63,14 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         initialParameters()
     }
     
+    open override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        
+        coordinator.animate(alongsideTransition: { _ in
+            self.playerViewController.view.frame = CGRect(origin: CGPoint.zero, size: size)
+        }, completion: nil)
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
@@ -521,7 +529,19 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
     }
     
+    func setPlayerViewConstraints() {
+        playerViewController.view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            playerViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            playerViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            playerViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            playerViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+    }
+    
     func navigateToVideoPlayer(with player: AVPlayer) {
+        setupARFunctionality()
+        playerViewController.view.frame = UIScreen.main.bounds
         playerViewController.player = player
         playerViewController.modalPresentationStyle = .fullScreen
         playerViewController.modalPresentationCapturesStatusBarAppearance = true
