@@ -526,6 +526,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         playerViewController.modalPresentationStyle = .fullScreen
         playerViewController.modalPresentationCapturesStatusBarAppearance = true
         
+        if let player = playerViewController.player {
+            player.seek(to: .zero)
+        }
+        
         self.present(playerViewController, animated: true) {
             if let player = self.playerViewController.player {
                 player.play()
@@ -553,11 +557,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
-        
-        if let player = playerViewController.player {
-            player.seek(to: .zero)
-        }
-        
+
         self.dismiss(animated: true) { [weak self] in
             guard let self = self, let identifier = self.currentIdentifier else { return }
             if let actions = self.customARConfig?.objectLabelsWithActions[identifier], let currentActionIndex = self.currentActionIndex, currentActionIndex < actions.count {
