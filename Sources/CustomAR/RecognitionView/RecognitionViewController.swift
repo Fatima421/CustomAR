@@ -53,7 +53,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-        restartCaptureSession()
         initialParameters()
     }
     
@@ -115,6 +114,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private func restartCaptureSession() {
         stopCaptureSession()
         setupAVCapture()
+        startCaptureSession()
     }
     
     func resetZoom() {
@@ -442,9 +442,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         setupLayers()
         updateLayerGeometry()
         setupVision()
-        
-        // start the capture
-        startCaptureSession()
     }
     
     func setupLayers() {
