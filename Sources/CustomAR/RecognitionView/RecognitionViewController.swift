@@ -402,6 +402,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         let action = actions[currentActionIndex]
         
+        detectionOverlay.sublayers = nil
+        
         switch action.type {
         case .panoramaView:
             if let image = action.media as? UIImage {
