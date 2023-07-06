@@ -540,6 +540,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func navigateToVideoPlayer(with player: AVPlayer) {
+        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
         setupARFunctionality()
         playerViewController.view.frame = UIScreen.main.bounds
         playerViewController.player = player
