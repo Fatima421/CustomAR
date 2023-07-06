@@ -592,4 +592,12 @@ class CustomAVPlayerViewController: AVPlayerViewController {
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         return .landscape
     }
+    
+    override var shouldAutorotate: Bool {
+        return false
+    }
+    
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        return .landscapeLeft
+    }
 }
