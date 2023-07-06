@@ -16,7 +16,6 @@ class PanoramaViewController: UIViewController {
     // MARK: Properties
     var image: UIImage?
     var panoramaView: CTPanoramaView!
-    var closeButton: UIButton?
     
     // MARK: Life cycle
     override func viewDidLoad() {
@@ -36,17 +35,15 @@ class PanoramaViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        if let closeButton = closeButton {
-            view.addSubview(closeButton)
-            setupView(closeButton)
-        }
+        view.addSubview(closeButton)
+        setupView()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
     }
     
-    private func setupView(_ closeButton: UIButton) {
+    private func setupView() {
         closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -56,6 +53,17 @@ class PanoramaViewController: UIViewController {
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
         ])
     }
+    
+    // MARK: Style
+    private lazy var closeButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage(named: "close"), for: .normal)
+        button.tintColor = .white
+        button.layer.cornerRadius = 10
+        button.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+        return button
+    }()
     
     // MARK: Actions
     @objc func didTapClose() {
