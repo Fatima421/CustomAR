@@ -402,8 +402,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         let action = actions[currentActionIndex]
         
-        detectionOverlay.sublayers = nil
-        
         switch action.type {
         case .panoramaView:
             if let image = action.media as? UIImage {
@@ -555,6 +553,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
+        detectionOverlay.sublayers = nil
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
 
         self.dismiss(animated: true) { [weak self] in
