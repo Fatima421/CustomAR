@@ -227,7 +227,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         setupARFunctionality()
     }
     
-    
     public func setupARFunctionality() {
         guard let delegate = arFunctionalityDelegate else { return }
 
@@ -485,7 +484,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private lazy var closeButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage(named: "close"), for: .normal)
-        button.tintColor = .white
+        button.tintColor = UIColor(named: "White")
         button.layer.cornerRadius = 10
         button.backgroundColor = UIColor.black.withAlphaComponent(0.6)
         button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
@@ -543,12 +542,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         transition.duration = 0.25
         transition.type = CATransitionType.fade
         self.view.window!.layer.add(transition, forKey: kCATransition)
-        
-        if let player = playerViewController.player {
-            player.play()
+        self.present(playerViewController, animated: false) {
+            if let player = playerViewController.player {
+                player.play()
+            }
         }
-        
-        self.present(playerViewController, animated: false)
         
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
