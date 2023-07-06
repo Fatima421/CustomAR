@@ -51,13 +51,14 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     // MARK: - Life Cycle
     
-    open override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
+    open override func viewDidLoad() {
+        super.viewDidLoad()
+        restartCaptureSession()
         initialParameters()
     }
     
-    open override func viewDidLoad() {
-        super.viewDidLoad()
+    open override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         restartCaptureSession()
         initialParameters()
     }
