@@ -530,6 +530,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             player.seek(to: .zero)
         }
         
+        let transition = CATransition()
+        transition.duration = 0.25
+        transition.type = CATransitionType.fade
+        self.view.window!.layer.add(transition, forKey: kCATransition)
         self.present(playerViewController, animated: false) {
             if let player = self.playerViewController.player {
                 player.play()
@@ -557,9 +561,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
-        
-        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-        UIViewController.attemptRotationToDeviceOrientation()
 
         self.dismiss(animated: true) { [weak self] in
             guard let self = self, let identifier = self.currentIdentifier else { return }
