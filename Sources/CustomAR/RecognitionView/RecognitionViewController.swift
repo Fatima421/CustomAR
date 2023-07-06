@@ -530,7 +530,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             player.seek(to: .zero)
         }
         
-        self.present(playerViewController, animated: true) {
+        let transition = CATransition()
+        transition.duration = 0.25
+        transition.type = CATransitionType.fade
+        self.view.window!.layer.add(transition, forKey: kCATransition)
+        self.present(playerViewController, animated: false) {
             if let player = self.playerViewController.player {
                 player.play()
             }
