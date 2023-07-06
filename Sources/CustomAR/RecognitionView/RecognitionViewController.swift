@@ -484,7 +484,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private lazy var closeButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage(named: "close"), for: .normal)
-        button.tintColor = UIColor(named: "White")
+        button.tintColor = UIColor(named: "CustomWhite")
         button.layer.cornerRadius = 10
         button.backgroundColor = UIColor.black.withAlphaComponent(0.6)
         button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
