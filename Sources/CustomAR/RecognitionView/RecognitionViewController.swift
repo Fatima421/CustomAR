@@ -31,6 +31,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var arDetailScreen: String?
     public var arFunctionalityDelegate: ARFunctionalityProtocol?
     public var titlesDict: [String: String]?
+    public var closeButton: UIButton?
     
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
@@ -182,15 +183,19 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
 
     private func setupView() {
-        view.addSubview(closeButton)
-        
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            closeButton.widthAnchor.constraint(equalToConstant: 44),
-            closeButton.heightAnchor.constraint(equalToConstant: 44),
-            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
-        ])
+        if let closeButton = self.closeButton {
+            closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
+
+            view.addSubview(closeButton)
+            
+            closeButton.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                closeButton.widthAnchor.constraint(equalToConstant: 44),
+                closeButton.heightAnchor.constraint(equalToConstant: 44),
+                closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+                closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
+            ])
+        }
         
         guard let infoIcon = infoIcon, let infoLabel = infoLabel else { return }
         
@@ -481,16 +486,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         return shapeLayer
     }
     
-    private lazy var closeButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.setImage(UIImage(named: "close"), for: .normal)
-        button.tintColor = UIColor(named: "CustomWhite")
-        button.layer.cornerRadius = 10
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
-        return button
-    }()
-    
     func preLoadPanoramaView(media: UIImage) {
         panoramaViewController = PanoramaViewController()
         panoramaViewController?.image = media
@@ -515,16 +510,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             panoramaViewController.transitioningDelegate = self
             self.present(panoramaViewController, animated: true, completion: nil)
         }
-    }
-    
-    func setPlayerViewConstraints() {
-//        playerViewController.view.translatesAutoresizingMaskIntoConstraints = false
-//        NSLayoutConstraint.activate([
-//            playerViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
-//            playerViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-//            playerViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-//            playerViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-//        ])
     }
     
     func navigateToVideoPlayer(with player: AVPlayer) {
@@ -595,17 +580,3 @@ extension CGFloat {
         return z * standardDeviation + mean
     }
 }
-
-//class CustomAVPlayerViewController: AVPlayerViewController {
-//    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-//        return .landscape
-//    }
-//
-//    override var shouldAutorotate: Bool {
-//        return false
-//    }
-//
-//    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-//        return .landscapeLeft
-//    }
-//}
