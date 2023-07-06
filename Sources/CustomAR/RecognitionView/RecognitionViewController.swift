@@ -46,7 +46,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var currentIdentifier: String?
     private var hasShownCameraMovementAlert: Bool = false
     private var panoramaViewController: PanoramaViewController?
-    private lazy var playerViewController = CustomAVPlayerViewController()
+    private lazy var playerViewController = AVPlayerViewController()
     private var noDetectionTimer: Timer?
     
     // MARK: - Life Cycle
@@ -530,10 +530,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             player.seek(to: .zero)
         }
         
-        let transition = CATransition()
-        transition.duration = 0.25
-        transition.type = CATransitionType.fade
-        self.view.window!.layer.add(transition, forKey: kCATransition)
         self.present(playerViewController, animated: false) {
             if let player = self.playerViewController.player {
                 player.play()
@@ -591,16 +587,16 @@ extension CGFloat {
     }
 }
 
-class CustomAVPlayerViewController: AVPlayerViewController {
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        return .landscape
-    }
-    
-    override var shouldAutorotate: Bool {
-        return false
-    }
-    
-    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        return .landscapeLeft
-    }
-}
+//class CustomAVPlayerViewController: AVPlayerViewController {
+//    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+//        return .landscape
+//    }
+//
+//    override var shouldAutorotate: Bool {
+//        return false
+//    }
+//
+//    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+//        return .landscapeLeft
+//    }
+//}
