@@ -16,13 +16,12 @@ class PanoramaViewController: UIViewController {
     // MARK: Properties
     var image: UIImage?
     var panoramaView: CTPanoramaView!
+    var closeButton: UIButton?
     
     // MARK: Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        rescaleOrientation(with: .landscape)
-        
+
         guard let image = image else { return }
         panoramaView = CTPanoramaView(frame: view.bounds, image: image)
         panoramaView?.controlMethod = .both
@@ -32,24 +31,23 @@ class PanoramaViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        rescaleOrientation(with: .landscape)
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        view.addSubview(closeButton)
-        setupView()
+        if let closeButton = closeButton {
+            view.addSubview(closeButton)
+            setupView(closeButton)
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
-        rescaleOrientation(with: .portrait)
     }
     
-    private func setupView() {
+    private func setupView(_ closeButton: UIButton) {
+        closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             closeButton.widthAnchor.constraint(equalToConstant: 44),
@@ -58,22 +56,6 @@ class PanoramaViewController: UIViewController {
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
         ])
     }
-    
-    private func rescaleOrientation(with orientation: UIInterfaceOrientationMask) {
-        var appDelegate = UIApplication.shared.delegate as! RotationRestrictable
-        appDelegate.restrictRotation = orientation
-    }
-    
-    // MARK: Style
-    private lazy var closeButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.setImage(UIImage(named: "close"), for: .normal)
-        button.tintColor = .white
-        button.layer.cornerRadius = 10
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        button.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
-        return button
-    }()
     
     // MARK: Actions
     @objc func didTapClose() {

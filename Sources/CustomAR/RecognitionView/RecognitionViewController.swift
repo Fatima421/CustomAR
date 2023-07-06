@@ -490,6 +490,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func preLoadPanoramaView(media: UIImage) {
         panoramaViewController = PanoramaViewController()
         panoramaViewController?.image = media
+        panoramaViewController?.closeButton = closeButton
         panoramaViewController?.loadViewIfNeeded()
     }
     
@@ -507,6 +508,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         DispatchQueue.main.async {
             let panoramaViewController = PanoramaViewController()
             panoramaViewController.image = media
+            panoramaViewController.closeButton = self.closeButton
             panoramaViewController.modalPresentationStyle = .overCurrentContext
             panoramaViewController.transitioningDelegate = self
             self.present(panoramaViewController, animated: true, completion: nil)
