@@ -46,7 +46,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var currentIdentifier: String?
     private var hasShownCameraMovementAlert: Bool = false
     private var panoramaViewController: PanoramaViewController?
-    private lazy var playerViewController = AVPlayerViewController()
     private var noDetectionTimer: Timer?
     
     // MARK: - Life Cycle
@@ -530,18 +529,17 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func setPlayerViewConstraints() {
-        playerViewController.view.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            playerViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
-            playerViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            playerViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            playerViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-        ])
+//        playerViewController.view.translatesAutoresizingMaskIntoConstraints = false
+//        NSLayoutConstraint.activate([
+//            playerViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
+//            playerViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+//            playerViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+//            playerViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+//        ])
     }
     
     func navigateToVideoPlayer(with player: AVPlayer) {
-        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-        setupARFunctionality()
+        let playerViewController = AVPlayerViewController()
         playerViewController.view.frame = UIScreen.main.bounds
         playerViewController.player = player
         playerViewController.modalPresentationStyle = .fullScreen
@@ -556,7 +554,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         transition.type = CATransitionType.fade
         self.view.window!.layer.add(transition, forKey: kCATransition)
         self.present(playerViewController, animated: false) {
-            if let player = self.playerViewController.player {
+            if let player = playerViewController.player {
                 player.play()
             }
         }
