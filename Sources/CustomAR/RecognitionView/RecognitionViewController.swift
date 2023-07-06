@@ -52,7 +52,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        restartCaptureSession()
         initialParameters()
     }
     
@@ -114,7 +113,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private func restartCaptureSession() {
         stopCaptureSession()
         setupAVCapture()
-        startCaptureSession()
     }
     
     func resetZoom() {
@@ -545,11 +543,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         transition.duration = 0.25
         transition.type = CATransitionType.fade
         self.view.window!.layer.add(transition, forKey: kCATransition)
-        self.present(playerViewController, animated: false) {
-            if let player = playerViewController.player {
-                player.play()
-            }
+        
+        if let player = playerViewController.player {
+            player.play()
         }
+        
+        self.present(playerViewController, animated: false)
         
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
