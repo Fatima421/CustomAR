@@ -62,6 +62,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         initialParameters()
     }
     
+    open override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        detectionOverlay.sublayers = nil
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
@@ -553,7 +558,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
-        detectionOverlay.sublayers = nil
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
 
         self.dismiss(animated: true) { [weak self] in
@@ -561,6 +565,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if let actions = self.customARConfig?.objectLabelsWithActions[identifier], let currentActionIndex = self.currentActionIndex, currentActionIndex < actions.count {
                 let nextAction = actions[currentActionIndex]
                 if nextAction.type == .panoramaView, let media = nextAction.media as? UIImage {
+                    self.detectionOverlay.sublayers = nil
                     self.preLoadPanoramaView(media: media)
                     self.executeCurrentAction(actions: actions)
                 } else {
