@@ -28,19 +28,11 @@ class PanoramaViewController: UIViewController {
         view.addSubview(panoramaView)
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-    }
-    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
         view.addSubview(closeButton)
         setupView()
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
     }
     
     private func setupView() {
