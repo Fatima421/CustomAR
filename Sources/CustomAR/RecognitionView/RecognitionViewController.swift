@@ -67,7 +67,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        print("--- alo")
         doDetection = true
     }
     
@@ -512,6 +511,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func preLoadPanoramaView(media: UIImage) {
         panoramaViewController = PanoramaViewController()
         panoramaViewController?.image = media
+        panoramaViewController?.doDetection = doDetection
         panoramaViewController?.loadViewIfNeeded()
     }
     
@@ -529,6 +529,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         DispatchQueue.main.async {
             let panoramaViewController = PanoramaViewController()
             panoramaViewController.image = media
+            panoramaViewController.doDetection = self.doDetection
             panoramaViewController.modalPresentationStyle = .overCurrentContext
             panoramaViewController.transitioningDelegate = self
             self.present(panoramaViewController, animated: true, completion: nil)

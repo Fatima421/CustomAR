@@ -16,6 +16,7 @@ class PanoramaViewController: UIViewController {
     // MARK: Properties
     var image: UIImage?
     var panoramaView: CTPanoramaView!
+    var doDetection: Bool?
     
     // MARK: Life cycle
     override func viewDidLoad() {
@@ -59,6 +60,7 @@ class PanoramaViewController: UIViewController {
     
     // MARK: Actions
     @objc func didTapClose() {
+        doDetection = true
         self.dismiss(animated: true)
     }
 }
