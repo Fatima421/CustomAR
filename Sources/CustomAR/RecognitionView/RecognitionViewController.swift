@@ -572,11 +572,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         fadeOutTimer?.invalidate()
         
-//        fadeOutTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
-//            UIView.animate(withDuration: 0.3) {
-//                self?.orientationView?.alpha = 1
-//            }
-//        }
+        fadeOutTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+            UIView.animate(withDuration: 0.3) {
+                self?.orientationView?.alpha = 1
+            }
+        }
     }
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
