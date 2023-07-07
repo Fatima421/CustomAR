@@ -85,7 +85,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         hasNavigatedToPanoramaView = false
         hasShownCameraMovementAlert = false
         resetZoom()
-        detectionOverlay.sublayers = nil
+        detectionOverlay.sublayers?.forEach { $0.removeFromSuperlayer() }
         if detectionOverlay.superlayer == nil {
             rootLayer.addSublayer(detectionOverlay)
         }
