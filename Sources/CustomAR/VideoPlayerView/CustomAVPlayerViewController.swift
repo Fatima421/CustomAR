@@ -31,8 +31,9 @@ class CustomAVPlayerViewController: AVPlayerViewController {
     }
     
     func isOrientationPortrait() -> Bool {
-        guard let videoTrack = player?.currentItem?.asset.tracks(withMediaType: .video).first else { return true }
-        let size = videoTrack.naturalSize.applying(videoTrack.preferredTransform)
-        return abs(size.width) < abs(size.height)
+//        guard let videoTrack = player?.currentItem?.asset.tracks(withMediaType: .video).first else { return true }
+//        let size = videoTrack.naturalSize.applying(videoTrack.preferredTransform)
+//        return abs(size.width) < abs(size.height)
+        true
     }
 }
