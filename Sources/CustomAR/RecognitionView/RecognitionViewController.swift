@@ -43,7 +43,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private let infoContainer = UIView()
     private let motionManager = CMMotionManager()
     private var lastMotionTime: Date?
-    private let movementTimeout: TimeInterval = 30.0
+    private let movementTimeout: TimeInterval = 15.0
     private var movementTimeoutTimer: Timer?
     private var currentIdentifier: String?
     private var hasShownCameraMovementAlert: Bool = false
