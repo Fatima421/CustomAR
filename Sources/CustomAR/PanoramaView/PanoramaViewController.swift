@@ -59,9 +59,6 @@ class PanoramaViewController: UIViewController {
     
     // MARK: Actions
     @objc func didTapClose() {
-        if let recognitionVC = self.presentingViewController as? RecognitionViewController {
-            recognitionVC.viewWillAppear(false)
-        }
         self.dismiss(animated: true)
     }
 }
