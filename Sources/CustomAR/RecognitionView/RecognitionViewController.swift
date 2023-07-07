@@ -67,6 +67,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        print("--- alo")
         doDetection = true
     }
     
