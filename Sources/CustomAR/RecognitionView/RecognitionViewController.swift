@@ -545,7 +545,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if let player = playerViewController.player {
                 player.play()
             }
-            self.showOrientationHint(duration: 2.0)
+            if playerViewController.isOrientationPortrait() {
+                self.showOrientationHint(duration: 2.0)
+            }
         }
         
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
