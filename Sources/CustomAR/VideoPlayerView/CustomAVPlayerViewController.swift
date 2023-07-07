@@ -19,8 +19,8 @@ class CustomAVPlayerViewController: AVPlayerViewController {
     
     private func setupOrientationView() {
         if let orientationView = orientationView {
-            view.addSubview(orientationView)
-            
+            contentOverlayView?.addSubview(orientationView)
+
             NSLayoutConstraint.activate([
                 orientationView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
                 orientationView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
