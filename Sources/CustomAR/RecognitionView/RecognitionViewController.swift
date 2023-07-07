@@ -619,3 +619,10 @@ extension CGFloat {
         return z * standardDeviation + mean
     }
 }
+
+extension AVPlayerViewController {
+    func disableGesture() {
+        let panGesture = UIPanGestureRecognizer(target: self, action: nil)
+        self.view.addGestureRecognizer(panGesture)
+    }
+}
