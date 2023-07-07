@@ -32,6 +32,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var arFunctionalityDelegate: ARFunctionalityProtocol?
     public var titlesDict: [String: String]?
     public var closeButton: UIButton?
+    public var orientationView: UIImageView?
     
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
@@ -48,6 +49,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var hasShownCameraMovementAlert: Bool = false
     private var panoramaViewController: PanoramaViewController?
     private var noDetectionTimer: Timer?
+    private var fadeOutTimer: Timer?
     
     // MARK: - Life Cycle
     
@@ -197,6 +199,16 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
 
     private func setupView() {
+        if let orientationView = orientationView {
+            view.addSubview(orientationView)
+            
+            NSLayoutConstraint.activate([
+                orientationView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                orientationView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                orientationView.widthAnchor.constraint(equalToConstant: 100),
+                orientationView.heightAnchor.constraint(equalToConstant: 100)
+            ])
+        }
         if let closeButton = self.closeButton {
             closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
 
@@ -544,6 +556,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             }
         }
         
+        showOrientationHint(duration: 2.0)
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
     
@@ -562,6 +575,18 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             self.executeCurrentAction(actions: actions)
         }
     }
+    
+    func showOrientationHint(duration: TimeInterval) {
+            orientationView?.alpha = 1
+            
+            fadeOutTimer?.invalidate()
+            
+            fadeOutTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+                UIView.animate(withDuration: 0.3) {
+                    self?.orientationView?.alpha = 0
+                }
+            }
+        }
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
