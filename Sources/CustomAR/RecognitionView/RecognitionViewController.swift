@@ -50,6 +50,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var panoramaViewController: PanoramaViewController?
     private var noDetectionTimer: Timer?
     private var fadeOutTimer: Timer?
+    private var doDetection: Bool = true
     
     // MARK: - Life Cycle
     
@@ -64,6 +65,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         initialParameters()
     }
     
+    open override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        doDetection = true
+    }
+    
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
@@ -72,6 +78,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         detectionRestartTimer?.invalidate()
         detectionRestartTimer = nil
+        doDetection = false
     }
     
     deinit {
@@ -260,69 +267,72 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
-        var remainingTime = detectionTime
-        
-        CATransaction.begin()
-        CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
-        
-        if let objectObservation = results.compactMap({ $0 as? VNRecognizedObjectObservation })
-            .filter({ $0.confidence > 0.5 })
-            .max(by: { $0.confidence < $1.confidence }) {
+
+        if doDetection {
+            var remainingTime = detectionTime
             
-            noDetectionTimer?.invalidate()
-            noDetectionTimer = nil
-            self.arFunctionalityDelegate?.detectionView.isHidden = true
-            startNoDetectionTimer()
+            CATransaction.begin()
+            CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
             
-            let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
-            
-            if detectionTimer == nil {
-                self.fireHaptic()
+            if let objectObservation = results.compactMap({ $0 as? VNRecognizedObjectObservation })
+                .filter({ $0.confidence > 0.5 })
+                .max(by: { $0.confidence < $1.confidence }) {
                 
-                // Show the info label
-                let identifier = objectObservation.labels.first?.identifier
-                let labelName = getLabelNameTitle(identifier)
+                noDetectionTimer?.invalidate()
+                noDetectionTimer = nil
+                self.arFunctionalityDelegate?.detectionView.isHidden = true
+                startNoDetectionTimer()
                 
-                if let infoLabel = self.infoLabel, infoLabel.isHidden {
-                    DispatchQueue.main.async {
-                        infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
-                        infoLabel.isHidden = false
-                        self.infoIcon?.isHidden = false
-                        self.infoContainer.isHidden = false
+                let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
+                
+                if detectionTimer == nil {
+                    self.fireHaptic()
+                    
+                    // Show the info label
+                    let identifier = objectObservation.labels.first?.identifier
+                    let labelName = getLabelNameTitle(identifier)
+                    
+                    if let infoLabel = self.infoLabel, infoLabel.isHidden {
+                        DispatchQueue.main.async {
+                            infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
+                            infoLabel.isHidden = false
+                            self.infoIcon?.isHidden = false
+                            self.infoContainer.isHidden = false
+                        }
                     }
+                    
+                    // Start the 2.0 seconds timer
+                    detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
+                        self?.detectionOverlay.sublayers = nil
+                        if let identifier = identifier {
+                            self?.detectionTimerExpired(objectBounds, identifier: identifier)
+                        }
+                    }
+                    detectionRestartTimer?.invalidate()
+                    detectionRestartTimer = nil
+                } else {
+                    detectionRestartTimer?.invalidate()
+                    detectionRestartTimer = nil
                 }
                 
-                // Start the 2.0 seconds timer
-                detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
-                    self?.detectionOverlay.sublayers = nil
-                    if let identifier = identifier {
-                        self?.detectionTimerExpired(objectBounds, identifier: identifier)
-                    }
-                }
-                detectionRestartTimer?.invalidate()
-                detectionRestartTimer = nil
+                let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
+                detectionOverlay.addSublayer(shapeLayer)
+                
             } else {
-                detectionRestartTimer?.invalidate()
-                detectionRestartTimer = nil
-            }
-            
-            let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
-            detectionOverlay.addSublayer(shapeLayer)
-            
-        } else {
-            if detectionRestartTimer == nil {
-                detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval, repeats: false) { [weak self] _ in
-                    if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
-                        remainingTime = remainingTimeInterval
+                if detectionRestartTimer == nil {
+                    detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval, repeats: false) { [weak self] _ in
+                        if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
+                            remainingTime = remainingTimeInterval
+                        }
+                        self?.detectionTimer?.invalidate()
+                        self?.detectionTimer = nil
+                        self?.resetDetectionLabel()
                     }
-                    self?.detectionTimer?.invalidate()
-                    self?.detectionTimer = nil
-                    self?.resetDetectionLabel()
                 }
             }
+            self.updateLayerGeometry()
+            CATransaction.commit()
         }
-        self.updateLayerGeometry()
-        CATransaction.commit()
     }
     
     func getLabelNameTitle(_ label: String?) -> String? {
@@ -417,10 +427,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         switch action.type {
         case .panoramaView:
             if let image = action.media as? UIImage {
+                doDetection = false
                 self.navigateToPanoramaView(media: image)
             }
         case .videoPlayer:
             if let player = action.media as? AVPlayer {
+                doDetection = false
                 self.navigateToVideoPlayer(with: player)
             }
         }
