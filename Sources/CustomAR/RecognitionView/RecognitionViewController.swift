@@ -50,7 +50,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var panoramaViewController: PanoramaViewController?
     private var noDetectionTimer: Timer?
     private var fadeOutTimer: Timer?
-    private var doDetection: Bool = true
+    static var doDetection: Bool = true
     
     // MARK: - Life Cycle
     
@@ -67,7 +67,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        doDetection = true
+        RecognitionViewController.doDetection = true
     }
     
     open override func viewWillDisappear(_ animated: Bool) {
@@ -78,7 +78,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         detectionRestartTimer?.invalidate()
         detectionRestartTimer = nil
-        doDetection = false
+        RecognitionViewController.doDetection = false
     }
     
     deinit {
@@ -268,7 +268,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
 
-        if doDetection {
+        if RecognitionViewController.doDetection {
             var remainingTime = detectionTime
             
             CATransaction.begin()
@@ -427,12 +427,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         switch action.type {
         case .panoramaView:
             if let image = action.media as? UIImage {
-                doDetection = false
+                RecognitionViewController.doDetection = false
                 self.navigateToPanoramaView(media: image)
             }
         case .videoPlayer:
             if let player = action.media as? AVPlayer {
-                doDetection = false
+                RecognitionViewController.doDetection = false
                 self.navigateToVideoPlayer(with: player)
             }
         }
@@ -511,7 +511,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func preLoadPanoramaView(media: UIImage) {
         panoramaViewController = PanoramaViewController()
         panoramaViewController?.image = media
-        panoramaViewController?.doDetection = doDetection
         panoramaViewController?.loadViewIfNeeded()
     }
     
@@ -529,7 +528,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         DispatchQueue.main.async {
             let panoramaViewController = PanoramaViewController()
             panoramaViewController.image = media
-            panoramaViewController.doDetection = self.doDetection
             panoramaViewController.modalPresentationStyle = .overCurrentContext
             panoramaViewController.transitioningDelegate = self
             self.present(panoramaViewController, animated: true, completion: nil)
