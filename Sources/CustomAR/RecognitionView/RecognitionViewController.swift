@@ -576,7 +576,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         fadeOutTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
             UIView.animate(withDuration: 0.3) {
-                self?.orientationView?.alpha = 1
+                self?.orientationView?.alpha = 0
             }
         }
     }
