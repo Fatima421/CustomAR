@@ -72,8 +72,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         detectionRestartTimer?.invalidate()
         detectionRestartTimer = nil
-        
-        detectionOverlay.sublayers = nil
     }
     
     deinit {
@@ -85,7 +83,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         hasNavigatedToPanoramaView = false
         hasShownCameraMovementAlert = false
         resetZoom()
-        detectionOverlay.sublayers?.forEach { $0.removeFromSuperlayer() }
         if detectionOverlay.superlayer == nil {
             rootLayer.addSublayer(detectionOverlay)
         }
