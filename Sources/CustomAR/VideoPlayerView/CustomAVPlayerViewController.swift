@@ -22,8 +22,8 @@ class CustomAVPlayerViewController: AVPlayerViewController {
             contentOverlayView?.addSubview(orientationView)
 
             NSLayoutConstraint.activate([
-                orientationView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                orientationView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                orientationView.centerXAnchor.constraint(equalTo: contentOverlayView!.centerXAnchor),
+                orientationView.centerYAnchor.constraint(equalTo: contentOverlayView!.centerYAnchor),
                 orientationView.widthAnchor.constraint(equalToConstant: 100),
                 orientationView.heightAnchor.constraint(equalToConstant: 100)
             ])
