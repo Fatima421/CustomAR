@@ -69,7 +69,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         detectionTimer?.invalidate()
         detectionTimer = nil
-
+        
         detectionRestartTimer?.invalidate()
         detectionRestartTimer = nil
         
@@ -170,15 +170,15 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         lastMotionTime = Date()
         motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
             guard let deviceMotion = deviceMotion else { return }
-
+            
             if abs(deviceMotion.userAcceleration.x) > 0.05 ||
                 abs(deviceMotion.userAcceleration.y) > 0.05 ||
                 abs(deviceMotion.userAcceleration.z) > 0.05 {
-
+                
                 self.lastMotionTime = Date()
                 self.resetMovementTimeoutTimer()
             }
-
+            
             if let lastMotionTime = self.lastMotionTime,
                Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
                 self.showCameraMovementAlert?()
@@ -186,32 +186,22 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             }
         }
     }
-
+    
     private func resetMovementTimeoutTimer() {
         movementTimeoutTimer?.invalidate()
         self.movementTimeoutTimer = nil
-            
+        
         movementTimeoutTimer = Timer.scheduledTimer(withTimeInterval: movementTimeout, repeats: true) { [weak self] timer in
             DispatchQueue.main.async {
                 self?.showCameraMovementAlert?()
             }
         }
     }
-
+    
     private func setupView() {
-        if let orientationView = orientationView {
-            view.addSubview(orientationView)
-            
-            NSLayoutConstraint.activate([
-                orientationView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                orientationView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-                orientationView.widthAnchor.constraint(equalToConstant: 100),
-                orientationView.heightAnchor.constraint(equalToConstant: 100)
-            ])
-        }
         if let closeButton = self.closeButton {
             closeButton.addTarget(self, action: #selector(didTapClose), for: .touchUpInside)
-
+            
             view.addSubview(closeButton)
             
             closeButton.translatesAutoresizingMaskIntoConstraints = false
@@ -260,17 +250,17 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     public func setupARFunctionality() {
         guard let delegate = arFunctionalityDelegate else { return }
-
+        
         view.addSubview(delegate.detectionView)
         delegate.detectionView.translatesAutoresizingMaskIntoConstraints = false
-
+        
         NSLayoutConstraint.activate([
             delegate.detectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             delegate.detectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             delegate.detectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
     }
-
+    
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
         var remainingTime = detectionTime
@@ -536,7 +526,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func navigateToVideoPlayer(with player: AVPlayer) {
-        let playerViewController = AVPlayerViewController()
+        let playerViewController = CustomAVPlayerViewController()
+        playerViewController.orientationView = self.orientationView
         playerViewController.view.frame = UIScreen.main.bounds
         playerViewController.player = player
         playerViewController.modalPresentationStyle = .fullScreen
@@ -577,16 +568,16 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func showOrientationHint(duration: TimeInterval) {
-            orientationView?.alpha = 1
-            
-            fadeOutTimer?.invalidate()
-            
-            fadeOutTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
-                UIView.animate(withDuration: 0.3) {
-                    self?.orientationView?.alpha = 0
-                }
+        orientationView?.alpha = 1
+        
+        fadeOutTimer?.invalidate()
+        
+        fadeOutTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+            UIView.animate(withDuration: 0.3) {
+                self?.orientationView?.alpha = 0
             }
         }
+    }
     
     @objc func playerDidFinishPlaying(note: NSNotification) {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
