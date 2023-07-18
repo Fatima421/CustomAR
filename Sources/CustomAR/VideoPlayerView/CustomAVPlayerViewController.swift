@@ -21,6 +21,7 @@ class CustomAVPlayerViewController: AVPlayerViewController {
         if let orientationView = orientationView {
             contentOverlayView?.addSubview(orientationView)
 
+            self.showsPlaybackControls = false
             NSLayoutConstraint.activate([
                 orientationView.centerXAnchor.constraint(equalTo: contentOverlayView!.centerXAnchor),
                 orientationView.topAnchor.constraint(equalTo: contentOverlayView!.safeAreaLayoutGuide.bottomAnchor, constant: -120),
@@ -32,5 +33,16 @@ class CustomAVPlayerViewController: AVPlayerViewController {
     
     func isOrientationPortrait() -> Bool {
         UIDevice.current.orientation.isPortrait
+    }
+    
+    var _firstTap = true
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        if _firstTap {
+            showsPlaybackControls = true
+            _firstTap = false
+            return
+        }
+        super.touchesBegan(touches, with: event)
     }
 }
