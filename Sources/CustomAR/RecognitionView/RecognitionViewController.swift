@@ -56,33 +56,58 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-        initialParameters()
+        
+        if customARConfig?.shouldDetect ?? true {
+            initialParameters()
+        } else {
+            doActions()
+        }
     }
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        restartCaptureSession()
-        initialParameters()
+        
+        if customARConfig?.shouldDetect ?? true {
+            restartCaptureSession()
+            initialParameters()
+        } else {
+            doActions()
+        }
     }
     
     open override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        RecognitionViewController.doDetection = true
+        
+        if customARConfig?.shouldDetect ?? true {
+            RecognitionViewController.doDetection = true
+        } else {
+            doActions()
+        }
     }
     
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        detectionTimer?.invalidate()
-        detectionTimer = nil
-        
-        detectionRestartTimer?.invalidate()
-        detectionRestartTimer = nil
-        RecognitionViewController.doDetection = false
+        if customARConfig?.shouldDetect ?? true {
+            detectionTimer?.invalidate()
+            detectionTimer = nil
+            
+            detectionRestartTimer?.invalidate()
+            detectionRestartTimer = nil
+            RecognitionViewController.doDetection = false
+        } else {
+            doActions()
+        }
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+    }
+    
+    func doActions() {
+        if let arID = customARConfig?.arSpotID, let actions = self.customARConfig?.objectLabelsWithActions[arID] {
+            self.executeCurrentAction(actions: actions)
+        }
     }
     
     func initialParameters() {
