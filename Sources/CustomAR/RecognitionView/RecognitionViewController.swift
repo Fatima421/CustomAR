@@ -12,6 +12,7 @@ import CoreML
 import CoreMotion
 import AVKit
 
+// Protocol for AR functionality
 public protocol ARFunctionalityProtocol {
     var detectionView: UIView { get }
     func didTapDetectionButton()
@@ -21,6 +22,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     // MARK: - Properties
     
+    // Public properties
     public var detectionTime: Double = 2.0
     public var detectionInterval: Double = 0.5
     public var customARConfig: CustomARConfig?
@@ -34,6 +36,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var closeButton: UIButton?
     public var orientationView: UIImageView?
     
+    // Private properties
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
     private var hasNavigatedToPanoramaView: Bool = false
@@ -104,41 +107,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
     
-    func doActions() {
-        if let arID = customARConfig?.arSpotID, let actions = self.customARConfig?.objectLabelsWithActions[arID] {
-            self.executeCurrentAction(actions: actions)
-        }
-    }
-    
-    func initialParameters() {
-        arFunctionalityDelegate?.detectionView.isHidden = true
-        hasNavigatedToPanoramaView = false
-        hasShownCameraMovementAlert = false
-        resetZoom()
-        if detectionOverlay.superlayer == nil {
-            rootLayer.addSublayer(detectionOverlay)
-        }
-        setupView()
-        startNoDetectionTimer()
-        setupMotionDetection()
-    }
-    
-    func resetDetectionLabel() {
-        self.infoLabel?.text = infoLabelInitialText
-        infoLabel?.isHidden = true
-        infoIcon?.isHidden = true
-        infoContainer.isHidden = true
-    }
-    
-    func startNoDetectionTimer() {
-        if noDetectionTimer == nil {
-            noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
-                guard let self = self else { return }
-                self.arFunctionalityDelegate?.detectionView.isHidden = false
-            }
-        }
-    }
-    
     // MARK: - Capture Session
     
     public func startCaptureSession() {
@@ -171,6 +139,38 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             self.previewLayer?.position = CGPoint(x: self.rootLayer.bounds.midX, y: self.rootLayer.bounds.midY)
             
             CATransaction.commit()
+        }
+    }
+    
+    // MARK: Setup
+    
+
+    func initialParameters() {
+        arFunctionalityDelegate?.detectionView.isHidden = true
+        hasNavigatedToPanoramaView = false
+        hasShownCameraMovementAlert = false
+        resetZoom()
+        if detectionOverlay.superlayer == nil {
+            rootLayer.addSublayer(detectionOverlay)
+        }
+        setupView()
+        startNoDetectionTimer()
+        setupMotionDetection()
+    }
+    
+    func resetDetectionLabel() {
+        self.infoLabel?.text = infoLabelInitialText
+        infoLabel?.isHidden = true
+        infoIcon?.isHidden = true
+        infoContainer.isHidden = true
+    }
+    
+    func startNoDetectionTimer() {
+        if noDetectionTimer == nil {
+            noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
+                guard let self = self else { return }
+                self.arFunctionalityDelegate?.detectionView.isHidden = false
+            }
         }
     }
     
@@ -485,7 +485,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     override func setupAVCapture() {
         super.setupAVCapture()
         
-        // setup Vision parts
         setupLayers()
         updateLayerGeometry()
         setupVision()
@@ -588,6 +587,13 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     // MARK: Actions
+    
+    func doActions() {
+        if let arID = customARConfig?.arSpotID, let actions = self.customARConfig?.objectLabelsWithActions[arID] {
+            self.executeCurrentAction(actions: actions)
+        }
+    }
+    
     @objc func didTapClose() {
         self.dismiss(animated: true) {
             self.resetDetectionLabel()
@@ -621,6 +627,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         self.dismiss(animated: true) { [weak self] in
             guard let self = self, let identifier = self.currentIdentifier else { return }
             if let actions = self.customARConfig?.objectLabelsWithActions[identifier], let currentActionIndex = self.currentActionIndex, currentActionIndex < actions.count {
+                print("--- current identifier \(self.currentIdentifier)")
                 let nextAction = actions[currentActionIndex]
                 if nextAction.type == .panoramaView, let media = nextAction.media as? UIImage {
                     self.detectionOverlay.sublayers = nil
