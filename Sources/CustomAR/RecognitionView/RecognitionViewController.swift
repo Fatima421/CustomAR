@@ -558,7 +558,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
     }
     
-    func navigateToVideoPlayer(with player: AVPlayer) {
+    open func navigateToVideoPlayer(with player: AVPlayer) {
         let playerViewController = CustomAVPlayerViewController()
         playerViewController.orientationView = self.orientationView
         playerViewController.view.frame = UIScreen.main.bounds
@@ -627,7 +627,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         self.dismiss(animated: true) { [weak self] in
             guard let self = self, let identifier = self.currentIdentifier else { return }
             if let actions = self.customARConfig?.objectLabelsWithActions[identifier], let currentActionIndex = self.currentActionIndex, currentActionIndex < actions.count {
-                print("--- current identifier \(self.currentIdentifier)")
                 let nextAction = actions[currentActionIndex]
                 if nextAction.type == .panoramaView, let media = nextAction.media as? UIImage {
                     self.detectionOverlay.sublayers = nil
