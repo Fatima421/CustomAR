@@ -59,48 +59,29 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if customARConfig?.shouldDetect ?? true {
-            initialParameters()
-        } else {
-            doActions()
-        }
+        initialParameters()
     }
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        if customARConfig?.shouldDetect ?? true {
-            restartCaptureSession()
-            initialParameters()
-        } else {
-            doActions()
-        }
+        restartCaptureSession()
+        initialParameters()
     }
     
     open override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
-        if customARConfig?.shouldDetect ?? true {
-            RecognitionViewController.doDetection = true
-        } else {
-            doActions()
-        }
+        RecognitionViewController.doDetection = true
     }
     
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        if customARConfig?.shouldDetect ?? true {
-            detectionTimer?.invalidate()
-            detectionTimer = nil
-            
-            detectionRestartTimer?.invalidate()
-            detectionRestartTimer = nil
-            RecognitionViewController.doDetection = false
-        } else {
-            doActions()
-        }
+        detectionTimer?.invalidate()
+        detectionTimer = nil
+        
+        detectionRestartTimer?.invalidate()
+        detectionRestartTimer = nil
+        RecognitionViewController.doDetection = false
     }
     
     deinit {
@@ -558,7 +539,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
     }
     
-    open func navigateToVideoPlayer(with player: AVPlayer) {
+    func navigateToVideoPlayer(with player: AVPlayer) {
         let playerViewController = CustomAVPlayerViewController()
         playerViewController.orientationView = self.orientationView
         playerViewController.view.frame = UIScreen.main.bounds
@@ -582,6 +563,32 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 self.showOrientationHint(duration: 2.0)
             }
         }
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
+    }
+    
+    open func navigateToVideoPlayer(with player: AVPlayer, from viewController: UIViewController) {
+        let playerViewController = CustomAVPlayerViewController()
+        playerViewController.orientationView = self.orientationView
+        playerViewController.view.frame = UIScreen.main.bounds
+        playerViewController.player = player
+        playerViewController.modalPresentationStyle = .fullScreen
+        playerViewController.modalPresentationCapturesStatusBarAppearance = true
+        
+        if let player = playerViewController.player {
+            player.seek(to: .zero)
+        }
+        
+        UIView.transition(with: viewController.view, duration: 0.25, options: .transitionCrossDissolve, animations: {
+            viewController.present(playerViewController, animated: false) {
+                if let player = playerViewController.player {
+                    player.play()
+                }
+                if playerViewController.isOrientationPortrait() {
+                    self.showOrientationHint(duration: 2.0)
+                }
+            }
+        }, completion: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
