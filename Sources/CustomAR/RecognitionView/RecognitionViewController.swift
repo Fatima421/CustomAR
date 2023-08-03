@@ -580,7 +580,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
         
         UIView.transition(with: viewController.view, duration: 0.25, options: .transitionCrossDissolve, animations: {
-            viewController.present(playerViewController, animated: false) {
+            viewController.present(playerViewController, animated: true) {
                 if let player = playerViewController.player {
                     player.play()
                 }
