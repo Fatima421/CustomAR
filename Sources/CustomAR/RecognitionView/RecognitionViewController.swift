@@ -540,31 +540,36 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func navigateToVideoPlayer(with player: AVPlayer) {
-        let playerViewController = CustomAVPlayerViewController()
-        playerViewController.orientationView = self.orientationView
-        playerViewController.view.frame = UIScreen.main.bounds
-        playerViewController.player = player
-        playerViewController.modalPresentationStyle = .fullScreen
-        playerViewController.modalPresentationCapturesStatusBarAppearance = true
-        
-        if let player = playerViewController.player {
-            player.seek(to: .zero)
-        }
-        
-        let transition = CATransition()
-        transition.duration = 0.25
-        transition.type = CATransitionType.fade
-        self.view.window!.layer.add(transition, forKey: kCATransition)
-        self.present(playerViewController, animated: false) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            let playerViewController = CustomAVPlayerViewController()
+            playerViewController.orientationView = self.orientationView
+            playerViewController.view.frame = UIScreen.main.bounds
+            playerViewController.player = player
+            playerViewController.modalPresentationStyle = .fullScreen
+            playerViewController.modalPresentationCapturesStatusBarAppearance = true
+            
             if let player = playerViewController.player {
-                player.play()
+                player.seek(to: .zero)
             }
-            if playerViewController.isOrientationPortrait() {
-                self.showOrientationHint(duration: 2.0)
+            
+            let transition = CATransition()
+            transition.duration = 0.25
+            transition.type = CATransitionType.fade
+            self.view.window?.layer.add(transition, forKey: nil)
+            
+            self.present(playerViewController, animated: true) {
+                if let player = playerViewController.player {
+                    player.play()
+                }
+                if playerViewController.isOrientationPortrait() {
+                    self.showOrientationHint(duration: 2.0)
+                }
             }
+            
+            NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
         }
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
     
     open func navigateToVideoPlayer(with player: AVPlayer, from viewController: UIViewController) {
