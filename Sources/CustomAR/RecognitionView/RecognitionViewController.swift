@@ -16,6 +16,7 @@ import AVKit
 public protocol ARFunctionalityProtocol {
     var detectionView: UIView { get }
     func didTapDetectionButton()
+    func videoDidStartPlaying(id: String, origin: String)
 }
 
 open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
@@ -54,6 +55,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var noDetectionTimer: Timer?
     private var fadeOutTimer: Timer?
     static var doDetection: Bool = true
+    private var origin: String = "ar_recognition"
     
     // MARK: - Life Cycle
     
@@ -147,6 +149,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func startNoDetectionTimer() {
+        print("--- entra")
         if noDetectionTimer == nil {
             noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
                 guard let self = self else { return }
@@ -420,12 +423,12 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
                 self.currentIdentifier = identifier
                 self.currentActionIndex = 0
-                self.executeCurrentAction(actions: actions)
+                self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_recognition")
             }
         }
     }
     
-    func executeCurrentAction(actions: [Action]) {
+    func executeCurrentAction(actions: [Action], identifier: String, origin: String) {
         guard let currentActionIndex = currentActionIndex, currentActionIndex < actions.count else { return }
         
         let action = actions[currentActionIndex]
@@ -439,7 +442,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         case .videoPlayer:
             if let player = action.media as? AVPlayer {
                 RecognitionViewController.doDetection = false
-                self.navigateToVideoPlayer(with: player)
+                self.navigateToVideoPlayer(with: player, id: identifier, origin: origin)
             }
         }
         
@@ -539,7 +542,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
     }
     
-    func navigateToVideoPlayer(with player: AVPlayer) {
+    func navigateToVideoPlayer(with player: AVPlayer, id: String, origin: String) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
@@ -562,6 +565,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             self.present(playerViewController, animated: true) {
                 if let player = playerViewController.player {
                     player.play()
+                    self.arFunctionalityDelegate?.videoDidStartPlaying(id: id, origin: origin)
+                    self.origin = origin
                 }
                 if playerViewController.isOrientationPortrait() {
                     self.showOrientationHint(duration: 2.0)
@@ -588,6 +593,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             viewController.present(playerViewController, animated: true) {
                 if let player = playerViewController.player {
                     player.play()
+                    self.arFunctionalityDelegate?.videoDidStartPlaying(id: self.currentIdentifier ?? "", origin: "visit")
+                    self.origin = "visit"
                 }
                 if playerViewController.isOrientationPortrait() {
                     self.showOrientationHint(duration: 2.0)
@@ -602,7 +609,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func doActions() {
         if let arID = customARConfig?.arSpotID, let actions = self.customARConfig?.objectLabelsWithActions[arID] {
-            self.executeCurrentAction(actions: actions)
+            self.executeCurrentAction(actions: actions, identifier: arID, origin: "ar_recognition")
         }
     }
     
@@ -617,7 +624,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
             self.currentIdentifier = identifier
             self.currentActionIndex = 0
-            self.executeCurrentAction(actions: actions)
+            self.origin = "ar_manual"
+            self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_manual")
         }
     }
     
@@ -643,9 +651,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 if nextAction.type == .panoramaView, let media = nextAction.media as? UIImage {
                     self.detectionOverlay.sublayers = nil
                     self.preLoadPanoramaView(media: media)
-                    self.executeCurrentAction(actions: actions)
+                    self.executeCurrentAction(actions: actions, identifier: identifier, origin: self.origin)
                 } else {
-                    self.executeCurrentAction(actions: actions)
+                    self.executeCurrentAction(actions: actions, identifier: identifier, origin: self.origin)
                 }
             }
         }
