@@ -149,7 +149,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     func startNoDetectionTimer() {
-        print("--- entra")
         if noDetectionTimer == nil {
             noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
                 guard let self = self else { return }
