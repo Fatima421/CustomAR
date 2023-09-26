@@ -49,6 +49,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var fadeOutTimer: Timer?
     static var doDetection: Bool = true
     private var origin: String = "ar_recognition"
+    private var detectionTimer: Timer?
+    private var restartTimer: Timer?
     
     // MARK: - Life Cycle
     
@@ -258,7 +260,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
-                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(detectionTimerExpired(_:)), object: nil)
+
+                restartTimer?.invalidate()
                 
                 self.arFunctionalityDelegate?.detectionView.isHidden = true
                 self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
@@ -267,7 +270,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 self.fireHaptic()
                 
-                // Show the info label
                 let identifier = objectObservation.labels.first?.identifier
                 let labelName = getLabelNameTitle(identifier)
                 
@@ -282,8 +284,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 if !isDetectionWindowActive {
                     isDetectionWindowActive = true
-                    // Perform selector for detectionTimerExpired after 1.5 seconds
-                    self.perform(#selector(detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
+                    detectionTimer?.invalidate()
+                    detectionTimer = Timer.scheduledTimer(timeInterval: 1.5, target: self, selector: #selector(detectionTimerExpired(_:)), userInfo: identifier, repeats: false)
                 }
                 
                 let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
@@ -291,8 +293,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
             } else {
                 if isDetectionWindowActive {
-                    // Perform selector for detectionRestart after 0.5 seconds
-                    self.perform(#selector(detectionRestart), with: nil, afterDelay: 0.5)
+                    restartTimer?.invalidate()
+                    restartTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(detectionRestart), userInfo: nil, repeats: false)
                 }
             }
             
@@ -300,6 +302,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             CATransaction.commit()
         }
     }
+
     
     @objc func detectionTimerExpired(_ identifier: String) {
         isDetectionWindowActive = false
@@ -316,7 +319,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     @objc func detectionRestart() {
         // Invalidate the detection timer
-        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(detectionTimerExpired), object: nil)
+        detectionTimer?.invalidate()
         isDetectionWindowActive = false
         self.resetDetectionLabel()
     }
