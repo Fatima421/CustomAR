@@ -57,6 +57,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     static var doDetection: Bool = true
     private var origin: String = "ar_recognition"
     
+    
+    
     // MARK: - Life Cycle
     
     open override func viewDidLoad() {
@@ -112,19 +114,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         startCaptureSession()
     }
     
-    func resetZoom() {
-        DispatchQueue.main.async {
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(0.25)
-            
-            self.previewLayer?.transform = CATransform3DIdentity
-            self.previewLayer?.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-            self.previewLayer?.position = CGPoint(x: self.rootLayer.bounds.midX, y: self.rootLayer.bounds.midY)
-            
-            CATransaction.commit()
-        }
-    }
-    
     // MARK: Setup
     
 
@@ -132,7 +121,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         arFunctionalityDelegate?.detectionView.isHidden = true
         hasNavigatedToPanoramaView = false
         hasShownCameraMovementAlert = false
-        resetZoom()
         if detectionOverlay.superlayer == nil {
             rootLayer.addSublayer(detectionOverlay)
         }
@@ -383,31 +371,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         shapeLayer.addSublayer(dotLayer)
         
         return shapeLayer
-    }
-    
-    func zoomAnimation(duration: TimeInterval, scale: CGFloat, objectBounds: CGRect, completion: (() -> Void)? = nil) {
-        DispatchQueue.main.async {
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(duration)
-            CATransaction.setCompletionBlock {
-                completion?()
-            }
-            
-            let newX = objectBounds.midX / self.detectionOverlay!.bounds.width
-            let newY = objectBounds.midY / self.detectionOverlay!.bounds.height
-            
-            self.previewLayer?.anchorPoint = CGPoint(x: newX, y: newY)
-            
-            let zoom = CABasicAnimation(keyPath: "transform.scale")
-            zoom.fromValue = 1.0
-            zoom.toValue = scale
-            zoom.duration = duration
-            
-            self.previewLayer?.add(zoom, forKey: nil)
-            self.previewLayer?.transform = CATransform3DScale(self.previewLayer!.transform, scale, scale, 1)
-            
-            CATransaction.commit()
-        }
     }
     
     func fireHaptic() {
