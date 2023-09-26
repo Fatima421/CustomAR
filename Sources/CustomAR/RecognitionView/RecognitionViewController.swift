@@ -46,9 +46,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var currentActionIndex: Int?
     private let infoContainer = UIView()
     private let motionManager = CMMotionManager()
-    private var lastMotionTime: Date?
-    private let movementTimeout: TimeInterval = 15.0
-    private var movementTimeoutTimer: Timer?
     private var currentIdentifier: String?
     private var hasShownCameraMovementAlert: Bool = false
     private var panoramaViewController: PanoramaViewController?
@@ -140,41 +137,34 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     // MARK: - Timers
     @objc func showDetectionView() {
         if RecognitionViewController.doDetection {
+            // Cancel the initial camera movement alert if any movement is detected
+            NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
+
             arFunctionalityDelegate?.detectionView.isHidden = false
         }
     }
     
     private func setupMotionDetection() {
         motionManager.deviceMotionUpdateInterval = 0.1
-        lastMotionTime = Date()
+        
+        // Schedule the initial camera movement alert to be shown after 5 seconds
+        self.perform(#selector(showCameraMovementBanner), with: nil, afterDelay: 5.0)
+        
         motionManager.startDeviceMotionUpdates(to: .main) { (deviceMotion, error) in
             guard let deviceMotion = deviceMotion else { return }
             
             if abs(deviceMotion.userAcceleration.x) > 0.05 ||
                 abs(deviceMotion.userAcceleration.y) > 0.05 ||
                 abs(deviceMotion.userAcceleration.z) > 0.05 {
-                
-                self.lastMotionTime = Date()
-                self.resetMovementTimeoutTimer()
-            }
-            
-            if let lastMotionTime = self.lastMotionTime,
-               Date().timeIntervalSince(lastMotionTime) > self.movementTimeout {
-                self.showCameraMovementAlert?()
-                self.lastMotionTime = Date()
+                                
+                // Cancel the initial camera movement alert if any movement is detected
+                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.showCameraMovementBanner), object: nil)
             }
         }
     }
     
-    private func resetMovementTimeoutTimer() {
-        movementTimeoutTimer?.invalidate()
-        self.movementTimeoutTimer = nil
-        
-        movementTimeoutTimer = Timer.scheduledTimer(withTimeInterval: movementTimeout, repeats: true) { [weak self] timer in
-            DispatchQueue.main.async {
-                self?.showCameraMovementAlert?()
-            }
-        }
+    @objc func showCameraMovementBanner() {
+        showCameraMovementAlert?()
     }
     
     func setupVision() {
@@ -274,6 +264,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 .max(by: { $0.confidence < $1.confidence }) {
                 
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
+                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
                 self.arFunctionalityDelegate?.detectionView.isHidden = true
                 self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
                 
