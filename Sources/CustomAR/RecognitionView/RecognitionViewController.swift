@@ -34,6 +34,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var titlesDict: [String: String]?
     public var closeButton: UIButton?
     public var orientationView: UIImageView?
+    private var isDetectionWindowActive = false
     
     // Private properties
     private var detectionOverlay: CALayer! = nil
@@ -157,6 +158,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     @objc func showCameraMovementBanner() {
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
+        self.perform(#selector(showDetectionView), with: nil, afterDelay: 15.0)
         showCameraMovementAlert?()
     }
     
@@ -277,15 +279,20 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                     }
                 }
                 
-                // Perform selector for detectionTimerExpired after 1.5 seconds
-                self.perform(#selector(detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
+                if !isDetectionWindowActive {
+                    isDetectionWindowActive = true
+                    // Perform selector for detectionTimerExpired after 1.5 seconds
+                    self.perform(#selector(detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
+                }
                 
                 let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
                 detectionOverlay.addSublayer(shapeLayer)
                 
             } else {
-                // Perform selector for detectionRestart after 0.5 seconds
-                self.perform(#selector(detectionRestart), with: nil, afterDelay: 0.5)
+                if isDetectionWindowActive {
+                    // Perform selector for detectionRestart after 0.5 seconds
+                    self.perform(#selector(detectionRestart), with: nil, afterDelay: 0.5)
+                }
             }
             
             self.updateLayerGeometry()
@@ -294,6 +301,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     @objc func detectionTimerExpired(_ identifier: String) {
+        isDetectionWindowActive = false
         resetDetectionLabel()
         if !hasNavigatedToPanoramaView {
             hasNavigatedToPanoramaView = true
@@ -308,6 +316,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     @objc func detectionRestart() {
         // Invalidate the detection timer
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(detectionTimerExpired), object: nil)
+        isDetectionWindowActive = false
         self.resetDetectionLabel()
     }
     
