@@ -34,12 +34,15 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var titlesDict: [String: String]?
     public var closeButton: UIButton?
     public var orientationView: UIImageView?
-    private var isDetectionWindowActive = false
+    public var detectionTime: Double = 2.0
+    public var detectionInterval: Double = 0.5
     
     // Private properties
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
     private var hasNavigatedToPanoramaView: Bool = false
+    private var detectionTimer: Timer?
+    private var detectionRestartTimer: Timer?
     private var currentActionIndex: Int?
     private let infoContainer = UIView()
     private let motionManager = CMMotionManager()
@@ -49,8 +52,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var fadeOutTimer: Timer?
     static var doDetection: Bool = true
     private var origin: String = "ar_recognition"
-    private var detectionTimer: Timer?
-    private var restartTimer: Timer?
     
     // MARK: - Life Cycle
     
@@ -72,8 +73,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        detectionTimer?.invalidate()
+        detectionTimer = nil
         
-        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(detectionTimerExpired), object: nil)
+        detectionRestartTimer?.invalidate()
+        detectionRestartTimer = nil
         RecognitionViewController.doDetection = false
     }
     
@@ -105,7 +109,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     // MARK: - Setup
     
-
+    
     func initialParameters() {
         arFunctionalityDelegate?.detectionView.isHidden = true
         hasNavigatedToPanoramaView = false
@@ -118,7 +122,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         // Perform selector for video alert
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
         self.perform(#selector(showDetectionView), with: nil, afterDelay: 15.0)
-
+        
         setupMotionDetection()
     }
     
@@ -134,7 +138,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         if RecognitionViewController.doDetection {
             // Cancel the initial camera movement alert if any movement is detected
             NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
-
+            
             arFunctionalityDelegate?.detectionView.isHidden = false
         }
     }
@@ -151,7 +155,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if abs(deviceMotion.userAcceleration.x) > 0.05 ||
                 abs(deviceMotion.userAcceleration.y) > 0.05 ||
                 abs(deviceMotion.userAcceleration.z) > 0.05 {
-                                
+                
                 // Cancel the initial camera movement alert if any movement is detected
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.showCameraMovementBanner), object: nil)
             }
@@ -249,8 +253,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
-
+        
         if RecognitionViewController.doDetection {
+            var remainingTime = detectionTime
+            
             CATransaction.begin()
             CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
             
@@ -260,68 +266,59 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
-
-                restartTimer?.invalidate()
-                
                 self.arFunctionalityDelegate?.detectionView.isHidden = true
                 self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
                 
                 let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
                 
-                self.fireHaptic()
-                
-                let identifier = objectObservation.labels.first?.identifier
-                let labelName = getLabelNameTitle(identifier)
-                
-                if let infoLabel = self.infoLabel, infoLabel.isHidden {
-                    DispatchQueue.main.async {
-                        infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
-                        infoLabel.isHidden = false
-                        self.infoIcon?.isHidden = false
-                        self.infoContainer.isHidden = false
+                if detectionTimer == nil {
+                    self.fireHaptic()
+                    
+                    // Show the info label
+                    let identifier = objectObservation.labels.first?.identifier
+                    let labelName = getLabelNameTitle(identifier)
+                    
+                    if let infoLabel = self.infoLabel, infoLabel.isHidden {
+                        DispatchQueue.main.async {
+                            infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
+                            infoLabel.isHidden = false
+                            self.infoIcon?.isHidden = false
+                            self.infoContainer.isHidden = false
+                        }
                     }
-                }
-                
-                if !isDetectionWindowActive {
-                    isDetectionWindowActive = true
-                    detectionTimer?.invalidate()
-                    detectionTimer = Timer.scheduledTimer(timeInterval: 1.5, target: self, selector: #selector(detectionTimerExpired(_:)), userInfo: identifier, repeats: false)
+                    
+                    // Start the 2.0 seconds timer
+                    detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
+                        self?.detectionOverlay.sublayers = nil
+                        if let identifier = identifier {
+                            self?.detectionTimerExpired(objectBounds, identifier: identifier)
+                        }
+                    }
+                    detectionRestartTimer?.invalidate()
+                    detectionRestartTimer = nil
+                } else {
+                    detectionRestartTimer?.invalidate()
+                    detectionRestartTimer = nil
                 }
                 
                 let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
                 detectionOverlay.addSublayer(shapeLayer)
                 
             } else {
-                if isDetectionWindowActive {
-                    restartTimer?.invalidate()
-                    restartTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(detectionRestart), userInfo: nil, repeats: false)
+                if detectionRestartTimer == nil {
+                    detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval, repeats: false) { [weak self] _ in
+                        if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
+                            remainingTime = remainingTimeInterval
+                        }
+                        self?.detectionTimer?.invalidate()
+                        self?.detectionTimer = nil
+                        self?.resetDetectionLabel()
+                    }
                 }
             }
-            
             self.updateLayerGeometry()
             CATransaction.commit()
         }
-    }
-
-    
-    @objc func detectionTimerExpired(_ identifier: String) {
-        isDetectionWindowActive = false
-        resetDetectionLabel()
-        if !hasNavigatedToPanoramaView {
-            hasNavigatedToPanoramaView = true
-            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
-                self.currentIdentifier = identifier
-                self.currentActionIndex = 0
-                self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_recognition")
-            }
-        }
-    }
-    
-    @objc func detectionRestart() {
-        // Invalidate the detection timer
-        detectionTimer?.invalidate()
-        isDetectionWindowActive = false
-        self.resetDetectionLabel()
     }
     
     func getLabelNameTitle(_ label: String?) -> String? {
@@ -369,6 +366,18 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func fireHaptic() {
         let feedbackGenerator = UIImpactFeedbackGenerator(style: .heavy)
         feedbackGenerator.impactOccurred()
+    }
+    
+    func detectionTimerExpired(_ objectBounds: CGRect, identifier: String) {
+        resetDetectionLabel()
+        if !hasNavigatedToPanoramaView {
+            hasNavigatedToPanoramaView = true
+            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
+                self.currentIdentifier = identifier
+                self.currentActionIndex = 0
+                self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_recognition")
+            }
+        }
     }
     
     func executeCurrentAction(actions: [Action], identifier: String, origin: String) {
