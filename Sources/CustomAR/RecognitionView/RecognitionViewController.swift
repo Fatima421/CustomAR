@@ -258,6 +258,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
+                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(detectionTimerExpired(_:)), object: nil)
                 
                 self.arFunctionalityDelegate?.detectionView.isHidden = true
                 self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
