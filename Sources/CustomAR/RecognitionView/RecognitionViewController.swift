@@ -24,8 +24,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     // MARK: - Properties
     
     // Public properties
-    public var detectionTime: Double = 2.0
-    public var detectionInterval: Double = 0.5
     public var customARConfig: CustomARConfig?
     public var infoLabel: UILabel?
     public var infoIcon: UIImageView?
@@ -41,8 +39,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var detectionOverlay: CALayer! = nil
     private var requests = [VNRequest]()
     private var hasNavigatedToPanoramaView: Bool = false
-    private var detectionTimer: Timer?
-    private var detectionRestartTimer: Timer?
     private var currentActionIndex: Int?
     private let infoContainer = UIView()
     private let motionManager = CMMotionManager()
@@ -74,11 +70,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        detectionTimer?.invalidate()
-        detectionTimer = nil
-        
-        detectionRestartTimer?.invalidate()
-        detectionRestartTimer = nil
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(detectionTimerExpired), object: nil)
         RecognitionViewController.doDetection = false
     }
     
@@ -122,7 +114,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         
         // Perform selector for video alert
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
-        self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
+        self.perform(#selector(showDetectionView), with: nil, afterDelay: 15.0)
 
         setupMotionDetection()
     }
@@ -254,8 +246,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         detectionOverlay.sublayers = nil
 
         if RecognitionViewController.doDetection {
-            var remainingTime = detectionTime
-            
             CATransaction.begin()
             CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
             
@@ -265,59 +255,59 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
                 NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
+                
                 self.arFunctionalityDelegate?.detectionView.isHidden = true
                 self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
                 
                 let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
                 
-                if detectionTimer == nil {
-                    self.fireHaptic()
-                    
-                    // Show the info label
-                    let identifier = objectObservation.labels.first?.identifier
-                    let labelName = getLabelNameTitle(identifier)
-                    
-                    if let infoLabel = self.infoLabel, infoLabel.isHidden {
-                        DispatchQueue.main.async {
-                            infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
-                            infoLabel.isHidden = false
-                            self.infoIcon?.isHidden = false
-                            self.infoContainer.isHidden = false
-                        }
+                self.fireHaptic()
+                
+                // Show the info label
+                let identifier = objectObservation.labels.first?.identifier
+                let labelName = getLabelNameTitle(identifier)
+                
+                if let infoLabel = self.infoLabel, infoLabel.isHidden {
+                    DispatchQueue.main.async {
+                        infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
+                        infoLabel.isHidden = false
+                        self.infoIcon?.isHidden = false
+                        self.infoContainer.isHidden = false
                     }
-                    
-                    // Start the 2.0 seconds timer
-                    detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
-                        self?.detectionOverlay.sublayers = nil
-                        if let identifier = identifier {
-                            self?.detectionTimerExpired(objectBounds, identifier: identifier)
-                        }
-                    }
-                    detectionRestartTimer?.invalidate()
-                    detectionRestartTimer = nil
-                } else {
-                    detectionRestartTimer?.invalidate()
-                    detectionRestartTimer = nil
                 }
+                
+                // Perform selector for detectionTimerExpired after 1.5 seconds
+                self.perform(#selector(detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
+
+                // Perform selector for detectionRestart after 0.5 seconds
+                self.perform(#selector(detectionRestart), with: nil, afterDelay: 0.5)
                 
                 let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
                 detectionOverlay.addSublayer(shapeLayer)
                 
-            } else {
-                if detectionRestartTimer == nil {
-                    detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval, repeats: false) { [weak self] _ in
-                        if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
-                            remainingTime = remainingTimeInterval
-                        }
-                        self?.detectionTimer?.invalidate()
-                        self?.detectionTimer = nil
-                        self?.resetDetectionLabel()
-                    }
-                }
             }
+            
             self.updateLayerGeometry()
             CATransaction.commit()
         }
+    }
+    
+    @objc func detectionTimerExpired(_ identifier: String) {
+        resetDetectionLabel()
+        if !hasNavigatedToPanoramaView {
+            hasNavigatedToPanoramaView = true
+            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
+                self.currentIdentifier = identifier
+                self.currentActionIndex = 0
+                self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_recognition")
+            }
+        }
+    }
+    
+    @objc func detectionRestart() {
+        // Invalidate the detection timer
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(detectionTimerExpired), object: nil)
+        self.resetDetectionLabel()
     }
     
     func getLabelNameTitle(_ label: String?) -> String? {
@@ -365,18 +355,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func fireHaptic() {
         let feedbackGenerator = UIImpactFeedbackGenerator(style: .heavy)
         feedbackGenerator.impactOccurred()
-    }
-    
-    func detectionTimerExpired(_ objectBounds: CGRect, identifier: String) {
-        resetDetectionLabel()
-        if !hasNavigatedToPanoramaView {
-            hasNavigatedToPanoramaView = true
-            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
-                self.currentIdentifier = identifier
-                self.currentActionIndex = 0
-                self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_recognition")
-            }
-        }
     }
     
     func executeCurrentAction(actions: [Action], identifier: String, origin: String) {
