@@ -156,6 +156,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     @objc func showCameraMovementBanner() {
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
         showCameraMovementAlert?()
     }
     
@@ -278,13 +279,13 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 // Perform selector for detectionTimerExpired after 1.5 seconds
                 self.perform(#selector(detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
-
-                // Perform selector for detectionRestart after 0.5 seconds
-                self.perform(#selector(detectionRestart), with: nil, afterDelay: 0.5)
                 
                 let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
                 detectionOverlay.addSublayer(shapeLayer)
                 
+            } else {
+                // Perform selector for detectionRestart after 0.5 seconds
+                self.perform(#selector(detectionRestart), with: nil, afterDelay: 0.5)
             }
             
             self.updateLayerGeometry()
