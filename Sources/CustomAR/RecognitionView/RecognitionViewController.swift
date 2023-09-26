@@ -52,12 +52,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var currentIdentifier: String?
     private var hasShownCameraMovementAlert: Bool = false
     private var panoramaViewController: PanoramaViewController?
-    private var noDetectionTimer: Timer?
     private var fadeOutTimer: Timer?
     static var doDetection: Bool = true
     private var origin: String = "ar_recognition"
-    
-    
     
     // MARK: - Life Cycle
     
@@ -114,7 +111,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         startCaptureSession()
     }
     
-    // MARK: Setup
+    // MARK: - Setup
     
 
     func initialParameters() {
@@ -125,7 +122,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             rootLayer.addSublayer(detectionOverlay)
         }
         setupView()
-        startNoDetectionTimer()
+        
+        // Perform selector for video alert
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
+        self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
+
         setupMotionDetection()
     }
     
@@ -136,32 +137,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         infoContainer.isHidden = true
     }
     
-    func startNoDetectionTimer() {
-        if noDetectionTimer == nil {
-            noDetectionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
-                guard let self = self else { return }
-                self.arFunctionalityDelegate?.detectionView.isHidden = false
-            }
-        }
-    }
-    
-    func setupVision() {
-        if let model = customARConfig?.model {
-            guard let objectDetectionModel = try? VNCoreMLModel(for: model) else { return }
-            
-            let objectRecognition = VNCoreMLRequest(model: objectDetectionModel) { [weak self] request, error in
-                if let error = error {
-                    print("Object detection error: \(error)")
-                    return
-                }
-                
-                guard let results = request.results as? [VNRecognizedObjectObservation] else { return }
-                
-                DispatchQueue.main.async {
-                    self?.drawVisionRequestResults(results)
-                }
-            }
-            self.requests = [objectRecognition]
+    // MARK: - Timers
+    @objc func showDetectionView() {
+        if RecognitionViewController.doDetection {
+            arFunctionalityDelegate?.detectionView.isHidden = false
         }
     }
     
@@ -195,6 +174,26 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             DispatchQueue.main.async {
                 self?.showCameraMovementAlert?()
             }
+        }
+    }
+    
+    func setupVision() {
+        if let model = customARConfig?.model {
+            guard let objectDetectionModel = try? VNCoreMLModel(for: model) else { return }
+            
+            let objectRecognition = VNCoreMLRequest(model: objectDetectionModel) { [weak self] request, error in
+                if let error = error {
+                    print("Object detection error: \(error)")
+                    return
+                }
+                
+                guard let results = request.results as? [VNRecognizedObjectObservation] else { return }
+                
+                DispatchQueue.main.async {
+                    self?.drawVisionRequestResults(results)
+                }
+            }
+            self.requests = [objectRecognition]
         }
     }
     
@@ -274,10 +273,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 .filter({ $0.confidence > 0.5 })
                 .max(by: { $0.confidence < $1.confidence }) {
                 
-                noDetectionTimer?.invalidate()
-                noDetectionTimer = nil
+                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
                 self.arFunctionalityDelegate?.detectionView.isHidden = true
-                startNoDetectionTimer()
+                self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
                 
                 let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
                 
