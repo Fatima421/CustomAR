@@ -51,6 +51,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     static var doDetection: Bool = true
     private var origin: String = "ar_recognition"
     private var isDetectionTimerRunning = false
+    private var detectedIdentifier: String?
     
     // MARK: - Life Cycle
     
@@ -266,6 +267,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 // Show the info label
                 let identifier = objectObservation.labels.first?.identifier
+                self.detectedIdentifier = identifier
                 let labelName = getLabelNameTitle(identifier)
                 
                 if let infoLabel = self.infoLabel, infoLabel.isHidden {
@@ -280,8 +282,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 if !isDetectionTimerRunning {
                     
                     // Start the 1.5 seconds timer using performSelector
-                    NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.detectionTimerExpired(_:)), object: nil)
-                    self.perform(#selector(self.detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
+                    NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.detectionTimerExpired), object: nil)
+                    self.perform(#selector(self.detectionTimerExpired), with: nil, afterDelay: 1.5)
                     print("starts every 1.5?")
                     
                     // Invalidate any existing 0.5-second timer
@@ -300,7 +302,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                     detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
                         print("enters every 0.5? \(self?.detectionRestartTimer?.timeInterval)")
                         // Cancel the performSelector
-                        NSObject.cancelPreviousPerformRequests(withTarget: self as Any, selector: #selector(self?.detectionTimerExpired(_:)), object: nil)
+                        NSObject.cancelPreviousPerformRequests(withTarget: self as Any, selector: #selector(self?.detectionTimerExpired), object: nil)
                         self?.resetDetectionLabel()
                         
                         self?.isDetectionTimerRunning = false
@@ -313,14 +315,16 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         }
     }
     
-    @objc func detectionTimerExpired(_ identifier: String) {
-        resetDetectionLabel()
-        if !hasNavigatedToPanoramaView {
-            hasNavigatedToPanoramaView = true
-            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
-                self.currentIdentifier = identifier
-                self.currentActionIndex = 0
-                self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_recognition")
+    @objc func detectionTimerExpired() {
+        if let detectedIdentifier = detectedIdentifier {
+            resetDetectionLabel()
+            if !hasNavigatedToPanoramaView {
+                hasNavigatedToPanoramaView = true
+                if let actions = self.customARConfig?.objectLabelsWithActions[detectedIdentifier] {
+                    self.currentIdentifier = detectedIdentifier
+                    self.currentActionIndex = 0
+                    self.executeCurrentAction(actions: actions, identifier: detectedIdentifier, origin: "ar_recognition")
+                }
             }
         }
     }
