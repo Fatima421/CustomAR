@@ -280,7 +280,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 }
                 
                 if !isDetectionTimerRunning {
-                    print("--- Starting 1.5-second timer")
 
                     // Start the 1.5 seconds timer using performSelector
                     self.perform(#selector(self.detectionTimerExpired), with: nil, afterDelay: 1.5)
@@ -296,7 +295,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 detectionOverlay.addSublayer(shapeLayer)
                 
             } else {
-                print("--- No object detected")
 
                 // Start a 0.5-second timer to cancel the 1.5-second timer if needed
                 if detectionRestartTimer == nil {
