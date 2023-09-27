@@ -34,7 +34,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var titlesDict: [String: String]?
     public var closeButton: UIButton?
     public var orientationView: UIImageView?
-    public var detectionTime: Double = 2.0
+    public var detectionTime: Double = 1.5
     public var detectionInterval: Double = 0.5
     
     // Private properties
@@ -255,7 +255,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         detectionOverlay.sublayers = nil
         
         if RecognitionViewController.doDetection {
-            var remainingTime = detectionTime
             
             CATransaction.begin()
             CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
@@ -263,11 +262,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             if let objectObservation = results.compactMap({ $0 as? VNRecognizedObjectObservation })
                 .filter({ $0.confidence > 0.5 })
                 .max(by: { $0.confidence < $1.confidence }) {
-                
-                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showDetectionView), object: nil)
-                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
-                self.arFunctionalityDelegate?.detectionView.isHidden = true
-                self.perform(#selector(showDetectionView), with: nil, afterDelay: 5.0)
                 
                 let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
                 
@@ -287,16 +281,10 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                         }
                     }
                     
-                    // Start the 2.0 seconds timer
-                    detectionTimer = Timer.scheduledTimer(withTimeInterval: remainingTime, repeats: false) { [weak self] _ in
-                        self?.detectionOverlay.sublayers = nil
-                        if let identifier = identifier {
-                            self?.detectionTimerExpired(objectBounds, identifier: identifier)
-                        }
-                    }
-                    detectionRestartTimer?.invalidate()
-                    detectionRestartTimer = nil
-                } else {
+                    // Start the 1.5 seconds timer using performSelector
+                    self.perform(#selector(self.detectionTimerExpired(_:)), with: identifier, afterDelay: detectionTime)
+                    
+                    // Invalidate any existing 0.5-second timer
                     detectionRestartTimer?.invalidate()
                     detectionRestartTimer = nil
                 }
@@ -305,19 +293,33 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 detectionOverlay.addSublayer(shapeLayer)
                 
             } else {
+                // Start a 0.5-second timer to cancel the 1.5-second timer if needed
                 if detectionRestartTimer == nil {
                     detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval, repeats: false) { [weak self] _ in
-                        if let remainingTimeInterval = self?.detectionTimer?.fireDate.timeIntervalSince(Date()) {
-                            remainingTime = remainingTimeInterval
-                        }
                         self?.detectionTimer?.invalidate()
                         self?.detectionTimer = nil
                         self?.resetDetectionLabel()
+                        
+                        // Cancel the performSelector
+                        NSObject.cancelPreviousPerformRequests(withTarget: self as Any, selector: #selector(self?.detectionTimerExpired(_:)), object: nil)
                     }
                 }
             }
+            
             self.updateLayerGeometry()
             CATransaction.commit()
+        }
+    }
+    
+    @objc func detectionTimerExpired(_ identifier: String) {
+        resetDetectionLabel()
+        if !hasNavigatedToPanoramaView {
+            hasNavigatedToPanoramaView = true
+            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
+                self.currentIdentifier = identifier
+                self.currentActionIndex = 0
+                self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_recognition")
+            }
         }
     }
     
@@ -366,18 +368,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     func fireHaptic() {
         let feedbackGenerator = UIImpactFeedbackGenerator(style: .heavy)
         feedbackGenerator.impactOccurred()
-    }
-    
-    func detectionTimerExpired(_ objectBounds: CGRect, identifier: String) {
-        resetDetectionLabel()
-        if !hasNavigatedToPanoramaView {
-            hasNavigatedToPanoramaView = true
-            if let actions = self.customARConfig?.objectLabelsWithActions[identifier] {
-                self.currentIdentifier = identifier
-                self.currentActionIndex = 0
-                self.executeCurrentAction(actions: actions, identifier: identifier, origin: "ar_recognition")
-            }
-        }
     }
     
     func executeCurrentAction(actions: [Action], identifier: String, origin: String) {
