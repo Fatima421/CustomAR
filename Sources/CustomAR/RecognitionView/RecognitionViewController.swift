@@ -298,10 +298,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
 
                 // Start a 0.5-second timer to cancel the 1.5-second timer if needed
                 if detectionRestartTimer == nil {
-                    print("--- Starting 0.5-second timer to cancel 1.5-second timer")
-
                     detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
-                        print("--- 0.5-second timer fired, canceling 1.5-second timer")
 
                         // Cancel the performSelector
                         NSObject.cancelPreviousPerformRequests(withTarget: self as Any, selector: #selector(self?.detectionTimerExpired), object: nil)
