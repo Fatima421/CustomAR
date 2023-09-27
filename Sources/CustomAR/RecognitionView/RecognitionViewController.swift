@@ -34,8 +34,6 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var titlesDict: [String: String]?
     public var closeButton: UIButton?
     public var orientationView: UIImageView?
-    public var detectionTime: Double = 1.5
-    public var detectionInterval: Double = 0.5
     
     // Private properties
     private var detectionOverlay: CALayer! = nil
@@ -265,29 +263,27 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 
                 let objectBounds = VNImageRectForNormalizedRect(objectObservation.boundingBox, Int(bufferSize.width), Int(bufferSize.height))
                 
-                if detectionTimer == nil {
-                    self.fireHaptic()
-                    
-                    // Show the info label
-                    let identifier = objectObservation.labels.first?.identifier
-                    let labelName = getLabelNameTitle(identifier)
-                    
-                    if let infoLabel = self.infoLabel, infoLabel.isHidden {
-                        DispatchQueue.main.async {
-                            infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
-                            infoLabel.isHidden = false
-                            self.infoIcon?.isHidden = false
-                            self.infoContainer.isHidden = false
-                        }
+                // Show the info label
+                let identifier = objectObservation.labels.first?.identifier
+                let labelName = getLabelNameTitle(identifier)
+                
+                if let infoLabel = self.infoLabel, infoLabel.isHidden {
+                    DispatchQueue.main.async {
+                        infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
+                        infoLabel.isHidden = false
+                        self.infoIcon?.isHidden = false
+                        self.infoContainer.isHidden = false
                     }
-                    
-                    // Start the 1.5 seconds timer using performSelector
-                    self.perform(#selector(self.detectionTimerExpired(_:)), with: identifier, afterDelay: detectionTime)
-                    
-                    // Invalidate any existing 0.5-second timer
-                    detectionRestartTimer?.invalidate()
-                    detectionRestartTimer = nil
                 }
+                
+                // Start the 1.5 seconds timer using performSelector
+                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.detectionTimerExpired(_:)), object: nil)
+                self.perform(#selector(self.detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
+                print("starts every 1.5?")
+                
+                // Invalidate any existing 0.5-second timer
+                detectionRestartTimer?.invalidate()
+                detectionRestartTimer = nil
                 
                 let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
                 detectionOverlay.addSublayer(shapeLayer)
@@ -295,13 +291,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             } else {
                 // Start a 0.5-second timer to cancel the 1.5-second timer if needed
                 if detectionRestartTimer == nil {
-                    detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: detectionInterval, repeats: false) { [weak self] _ in
-                        self?.detectionTimer?.invalidate()
-                        self?.detectionTimer = nil
-                        self?.resetDetectionLabel()
-                        
+                    detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+                        print("enters every 0.5? \(self?.detectionRestartTimer?.timeInterval)")
                         // Cancel the performSelector
                         NSObject.cancelPreviousPerformRequests(withTarget: self as Any, selector: #selector(self?.detectionTimerExpired(_:)), object: nil)
+                        self?.resetDetectionLabel()
                     }
                 }
             }
