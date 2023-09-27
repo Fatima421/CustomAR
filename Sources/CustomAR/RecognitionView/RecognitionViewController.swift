@@ -283,7 +283,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                     
                     // Start the 1.5 seconds timer using performSelector
                     NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.detectionTimerExpired), object: nil)
-                    self.perform(#selector(self.detectionTimerExpired), with: nil, afterDelay: 1.5)
+                    self.perform(#selector(self.detectionTimerExpired), with: nil, afterDelay: 3)
                     
                     isDetectionTimerRunning = true
                 }
@@ -298,7 +298,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             } else {
                 // Start a 0.5-second timer to cancel the 1.5-second timer if needed
                 if detectionRestartTimer == nil {
-                    detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+                    detectionRestartTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: false) { [weak self] _ in
                         // Cancel the performSelector
                         NSObject.cancelPreviousPerformRequests(withTarget: self as Any, selector: #selector(self?.detectionTimerExpired), object: nil)
                         self?.resetDetectionLabel()
