@@ -279,18 +279,18 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                     }
                 }
                 
-               // if !isDetectionTimerRunning {
+                if !isDetectionTimerRunning {
                     
                     // Start the 1.5 seconds timer using performSelector
                     NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.detectionTimerExpired), object: nil)
                     self.perform(#selector(self.detectionTimerExpired), with: nil, afterDelay: 1.5)
                     
-                    // Invalidate any existing 0.5-second timer
-                    detectionRestartTimer?.invalidate()
-                    detectionRestartTimer = nil
-                    
                     isDetectionTimerRunning = true
-              //  }
+                }
+                
+                // Invalidate any existing 0.5-second timer
+                detectionRestartTimer?.invalidate()
+                detectionRestartTimer = nil
                 
                 let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
                 detectionOverlay.addSublayer(shapeLayer)
