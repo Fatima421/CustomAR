@@ -50,6 +50,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var fadeOutTimer: Timer?
     static var doDetection: Bool = true
     private var origin: String = "ar_recognition"
+    private var isDetectionTimerRunning = false
     
     // MARK: - Life Cycle
     
@@ -276,14 +277,19 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                     }
                 }
                 
-                // Start the 1.5 seconds timer using performSelector
-                NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.detectionTimerExpired(_:)), object: nil)
-                self.perform(#selector(self.detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
-                print("starts every 1.5?")
-                
-                // Invalidate any existing 0.5-second timer
-                detectionRestartTimer?.invalidate()
-                detectionRestartTimer = nil
+                if !isDetectionTimerRunning {
+                    
+                    // Start the 1.5 seconds timer using performSelector
+                    NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.detectionTimerExpired(_:)), object: nil)
+                    self.perform(#selector(self.detectionTimerExpired(_:)), with: identifier, afterDelay: 1.5)
+                    print("starts every 1.5?")
+                    
+                    // Invalidate any existing 0.5-second timer
+                    detectionRestartTimer?.invalidate()
+                    detectionRestartTimer = nil
+                    
+                    isDetectionTimerRunning = true
+                }
                 
                 let shapeLayer = self.createRandomDottedRectLayerWithBounds(objectBounds)
                 detectionOverlay.addSublayer(shapeLayer)
@@ -296,6 +302,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                         // Cancel the performSelector
                         NSObject.cancelPreviousPerformRequests(withTarget: self as Any, selector: #selector(self?.detectionTimerExpired(_:)), object: nil)
                         self?.resetDetectionLabel()
+                        
+                        self?.isDetectionTimerRunning = false
                     }
                 }
             }
