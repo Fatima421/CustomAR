@@ -42,7 +42,7 @@ public struct CustomARConfig {
     let objectLabelsWithActions: [String: [Action]]
     let shouldDetect: Bool
     let arSpotID: String?
-    var arType: ARType?
+    public var arType: ARType?
 
     public init(model: MLModel, objectLabelsWithActions: [String: [Action]], shouldDetect: Bool, arSpotID: String? = nil, arType: ARType? = nil) {
         self.model = model
