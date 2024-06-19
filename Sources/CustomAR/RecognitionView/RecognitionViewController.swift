@@ -116,7 +116,6 @@ open class RecognitionViewController: CustomARViewController, UIViewControllerTr
     
     // MARK: - Setup
     
-    
     func initialParameters() {
         arFunctionalityDelegate?.detectionView.isHidden = true
         hasNavigatedToPanoramaView = false
@@ -729,52 +728,3 @@ open class RecognitionViewController: CustomARViewController, UIViewControllerTr
         }
     }
 }
-
-extension CGFloat {
-    static func randomGaussian(mean: CGFloat = 0.0, standardDeviation: CGFloat = 1.0) -> CGFloat {
-        let x1 = CGFloat(arc4random()) / CGFloat(UInt32.max)
-        let x2 = CGFloat(arc4random()) / CGFloat(UInt32.max)
-        
-        let z = sqrt(-2.0 * log(x1)) * cos(2.0 * .pi * x2)
-        
-        return z * standardDeviation + mean
-    }
-}
-
-//extension NSAttributedString {
-//    static func makeWith(text: String?, font: UIFont?, color: UIColor? = nil, lineHeight: CGFloat? = nil, letterSpacing: CGFloat? = nil, alignment: NSTextAlignment? = nil, truncateTail: Bool = false) -> NSAttributedString? {
-//        guard let text = text,
-//              let font = font else {
-//            return nil
-//        }
-//
-//        var attributes = [NSAttributedString.Key: Any]()
-//        attributes[.font] = font
-//
-//        if let color = color {
-//            attributes[.foregroundColor] = color
-//        }
-//
-//        if let letterSpacing = letterSpacing {
-//            attributes[.kern] = letterSpacing
-//        }
-//
-//        if lineHeight != nil || alignment != nil {
-//            let paragraph = NSMutableParagraphStyle()
-//            if let lineHeight = lineHeight {
-//                paragraph.minimumLineHeight = lineHeight
-//            }
-//            if let align = alignment {
-//                paragraph.alignment = align
-//            }
-//
-//            if truncateTail {
-//                paragraph.lineBreakMode = .byTruncatingTail
-//            }
-//
-//            attributes[.paragraphStyle] = paragraph
-//        }
-//
-//        return NSAttributedString(string: text, attributes: attributes)
-//    }
-//}
