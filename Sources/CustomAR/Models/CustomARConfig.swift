@@ -12,13 +12,20 @@ import Vision
 public enum ActionType {
     case panoramaView
     case videoPlayer
+    case tower
+}
+
+public struct ARType {
+    let title: String
+    let subtitle: String
+    let image: UIImage?
 }
 
 public struct Action {
     let type: ActionType
-    let media: Any
+    let media: Any?
     
-    public init(type: ActionType, media: Any) {
+    public init(type: ActionType, media: Any?) {
         self.type = type
         self.media = media
     }
@@ -29,11 +36,13 @@ public struct CustomARConfig {
     let objectLabelsWithActions: [String: [Action]]
     let shouldDetect: Bool
     let arSpotID: String?
+    var arType: ARType?
 
-    public init(model: MLModel, objectLabelsWithActions: [String: [Action]], shouldDetect: Bool, arSpotID: String? = nil) {
+    public init(model: MLModel, objectLabelsWithActions: [String: [Action]], shouldDetect: Bool, arSpotID: String? = nil, arType: ARType? = nil) {
         self.model = model
         self.objectLabelsWithActions = objectLabelsWithActions
         self.shouldDetect = shouldDetect
         self.arSpotID = arSpotID
+        self.arType = arType
     }
 }

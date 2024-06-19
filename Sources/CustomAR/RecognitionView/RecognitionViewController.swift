@@ -34,6 +34,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     public var titlesDict: [String: String]?
     public var closeButton: UIButton?
     public var orientationView: UIImageView?
+    public var doCapsuleRecognition: Bool = false
     
     // Private properties
     private var detectionOverlay: CALayer! = nil
@@ -53,6 +54,11 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     private var isDetectionTimerRunning = false
     private var detectedIdentifier: String?
     
+    // MARK: - Capsule AR detection mode properties
+    private var containerViews: [String: UIView] = [:]
+    private var lastKey: String = ""
+    private var hideDetectionTimers: [String: Timer] = [:]
+
     // MARK: - Life Cycle
     
     open override func viewDidLoad() {
@@ -135,10 +141,9 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     
     // MARK: - Timers
     @objc func showDetectionView() {
-        if RecognitionViewController.doDetection {
+        if !doCapsuleRecognition, RecognitionViewController.doDetection {
             // Cancel the initial camera movement alert if any movement is detected
             NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(showCameraMovementBanner), object: nil)
-            
             arFunctionalityDelegate?.detectionView.isHidden = false
         }
     }
@@ -251,6 +256,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         ])
     }
     
+    // MARK: Detection
     func drawVisionRequestResults(_ results: [Any]) {
         detectionOverlay.sublayers = nil
         
@@ -270,12 +276,16 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 self.detectedIdentifier = identifier
                 let labelName = getLabelNameTitle(identifier)
                 
-                if let infoLabel = self.infoLabel, infoLabel.isHidden {
-                    DispatchQueue.main.async {
-                        infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
-                        infoLabel.isHidden = false
-                        self.infoIcon?.isHidden = false
-                        self.infoContainer.isHidden = false
+                if doCapsuleRecognition, let identifier = identifier {
+                    showContainerView(for: identifier)
+                } else {
+                    if let infoLabel = self.infoLabel, infoLabel.isHidden {
+                        DispatchQueue.main.async {
+                            infoLabel.text = String(format: self.infoLabelInitialText ?? "", labelName ?? "")
+                            infoLabel.isHidden = false
+                            self.infoIcon?.isHidden = false
+                            self.infoContainer.isHidden = false
+                        }
                     }
                 }
                 
@@ -315,7 +325,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
     }
     
     @objc func detectionTimerExpired() {
-        if let detectedIdentifier = detectedIdentifier {
+        if let detectedIdentifier = detectedIdentifier, !doCapsuleRecognition {
             resetDetectionLabel()
             if !hasNavigatedToPanoramaView {
                 hasNavigatedToPanoramaView = true
@@ -333,6 +343,115 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
         return title
     }
     
+    private func showContainerView(for identifier: String) {
+        if containerViews.contains(where: { $0.key == identifier }) { return }
+        
+        let newDetectionView = UIView()
+        newDetectionView.translatesAutoresizingMaskIntoConstraints = false
+        newDetectionView.backgroundColor = .white
+        newDetectionView.layer.cornerRadius = 16
+        newDetectionView.clipsToBounds = true
+        
+        let title = UILabel()
+        title.textAlignment = .left
+        
+        title.attributedText = NSMutableAttributedString(
+            attributedString: NSAttributedString.makeWith(
+                text: customARConfig?.arType?.title,
+                font: .systemFont(ofSize: 16, weight: .semibold),
+                color: .black,
+                lineHeight: 24
+            )!)
+        
+        let subtitle = UILabel()
+        subtitle.textAlignment = .left
+        
+        subtitle.attributedText = NSMutableAttributedString(
+            attributedString: NSAttributedString.makeWith(
+                text: customARConfig?.arType?.subtitle,
+                font: .systemFont(ofSize: 16, weight: .regular),
+                color: .black,
+                lineHeight: 24
+            )!)
+        
+        let imageView = UIImageView()
+        imageView.layer.cornerRadius = 8
+        imageView.clipsToBounds = true
+        imageView.contentMode = .scaleAspectFill
+        imageView.image = customARConfig?.arType?.image
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let stackView = UIStackView(arrangedSubviews: [title, subtitle])
+        stackView.axis = .vertical
+        stackView.distribution = .fill
+        stackView.alignment = .leading
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        newDetectionView.addSubview(imageView)
+        newDetectionView.addSubview(stackView)
+        
+        view.addSubview(newDetectionView)
+        
+        let lastDetection = containerViews[lastKey]
+        
+        NSLayoutConstraint.activate([
+            newDetectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            newDetectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            newDetectionView.heightAnchor.constraint(equalToConstant: 84),
+            
+            imageView.leadingAnchor.constraint(equalTo: newDetectionView.leadingAnchor, constant: 8),
+            imageView.centerYAnchor.constraint(equalTo: newDetectionView.centerYAnchor),
+            imageView.heightAnchor.constraint(equalToConstant: 68),
+            imageView.widthAnchor.constraint(equalToConstant: 68),
+            
+            stackView.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 16),
+            stackView.centerYAnchor.constraint(equalTo: newDetectionView.centerYAnchor),
+            stackView.trailingAnchor.constraint(equalTo: newDetectionView.trailingAnchor, constant: -16)
+        ])
+
+        if containerViews.isEmpty {
+            NSLayoutConstraint.activate([
+                newDetectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            ])
+        } else if let lastDetection = lastDetection {
+            NSLayoutConstraint.activate([
+                newDetectionView.bottomAnchor.constraint(equalTo: lastDetection.topAnchor, constant: -8)
+            ])
+
+        }
+        
+        lastKey = identifier
+        containerViews[identifier] = newDetectionView
+        
+        let hideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+            self?.hideDetectionView(withIdentifier: identifier)
+        }
+        hideDetectionTimers[identifier] = hideTimer
+    }
+    
+    private func hideDetectionView(withIdentifier identifier: String) {
+        guard let viewToHide = containerViews[identifier] else { return }
+        
+        UIView.animate(withDuration: 0.3, animations: {
+            viewToHide.alpha = 0.0
+        }) { _ in
+            viewToHide.removeFromSuperview()
+            self.containerViews.removeValue(forKey: identifier)
+            self.hideDetectionTimers[identifier]?.invalidate()
+            self.hideDetectionTimers.removeValue(forKey: identifier)
+            
+            if self.containerViews.count == 1, let lastView = self.containerViews.values.first {
+                NSLayoutConstraint.activate([
+                    lastView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+                ])
+                
+                UIView.animate(withDuration: 0.3) {
+                    self.view.layoutIfNeeded()
+                }
+            }
+        }
+    }
+
     func createRandomDottedRectLayerWithBounds(_ bounds: CGRect, dotRadius: CGFloat = 1.0, density: CGFloat = 0.015) -> CALayer {
         let shapeLayer = CALayer()
         shapeLayer.bounds = bounds
@@ -391,6 +510,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 RecognitionViewController.doDetection = false
                 self.navigateToVideoPlayer(with: player, id: identifier, origin: origin)
             }
+        case .tower:
+            return
         }
         
         if let index = self.currentActionIndex {
@@ -617,3 +738,41 @@ extension CGFloat {
         return z * standardDeviation + mean
     }
 }
+
+//extension NSAttributedString {
+//    static func makeWith(text: String?, font: UIFont?, color: UIColor? = nil, lineHeight: CGFloat? = nil, letterSpacing: CGFloat? = nil, alignment: NSTextAlignment? = nil, truncateTail: Bool = false) -> NSAttributedString? {
+//        guard let text = text,
+//              let font = font else {
+//            return nil
+//        }
+//
+//        var attributes = [NSAttributedString.Key: Any]()
+//        attributes[.font] = font
+//
+//        if let color = color {
+//            attributes[.foregroundColor] = color
+//        }
+//
+//        if let letterSpacing = letterSpacing {
+//            attributes[.kern] = letterSpacing
+//        }
+//
+//        if lineHeight != nil || alignment != nil {
+//            let paragraph = NSMutableParagraphStyle()
+//            if let lineHeight = lineHeight {
+//                paragraph.minimumLineHeight = lineHeight
+//            }
+//            if let align = alignment {
+//                paragraph.alignment = align
+//            }
+//
+//            if truncateTail {
+//                paragraph.lineBreakMode = .byTruncatingTail
+//            }
+//
+//            attributes[.paragraphStyle] = paragraph
+//        }
+//
+//        return NSAttributedString(string: text, attributes: attributes)
+//    }
+//}

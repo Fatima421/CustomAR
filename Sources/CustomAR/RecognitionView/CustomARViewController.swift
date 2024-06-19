@@ -1,5 +1,5 @@
 //
-//  ARViewController.swift
+//  CustomARViewController.swift
 //  AugmentedReality
 //
 //  Created by Fatima Syed on 27/3/23.
@@ -9,7 +9,7 @@ import UIKit
 import AVFoundation
 import Vision
 
-open class ARViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
+open class CustomARViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     
     var bufferSize: CGSize = .zero
     var rootLayer: CALayer! = nil
