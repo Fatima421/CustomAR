@@ -17,9 +17,10 @@ public protocol ARFunctionalityProtocol {
     var detectionView: UIView { get }
     func didTapDetectionButton()
     func videoDidStartPlaying(id: String, origin: String)
+    func detectedObject(id: String)
 }
 
-open class RecognitionViewController: ARViewController, UIViewControllerTransitioningDelegate {
+open class RecognitionViewController: CustomARViewController, UIViewControllerTransitioningDelegate {
     
     // MARK: - Properties
     
@@ -277,6 +278,7 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
                 let labelName = getLabelNameTitle(identifier)
                 
                 if doCapsuleRecognition, let identifier = identifier {
+                    arFunctionalityDelegate?.detectedObject(id: identifier)
                     showContainerView(for: identifier)
                 } else {
                     if let infoLabel = self.infoLabel, infoLabel.isHidden {
@@ -439,8 +441,8 @@ open class RecognitionViewController: ARViewController, UIViewControllerTransiti
             self.containerViews.removeValue(forKey: identifier)
             self.hideDetectionTimers[identifier]?.invalidate()
             self.hideDetectionTimers.removeValue(forKey: identifier)
-            
-            if self.containerViews.count == 1, let lastView = self.containerViews.values.first {
+
+            if self.containerViews.count >= 1, let lastView = self.containerViews.values.first {
                 NSLayoutConstraint.activate([
                     lastView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
                 ])
