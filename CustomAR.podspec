@@ -12,6 +12,9 @@ Pod::Spec.new do |s|
   s.source_files = 'Sources/CustomAR/**/*.swift'
   #s.resources = 'Pod/Assets/*'
 
+  s.homepage = 'https://www.inqbarna.com'
+  s.license = { :type => 'MIT' }
+
   s.frameworks = 'UIKit', 'AVFoundation', 'Vision', 'CoreML', 'CoreMotion', 'AVKit', 'SceneKit', 'ImageIO'
   s.module_name = 'CustomAR'
 
