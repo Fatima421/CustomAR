@@ -18,5 +18,7 @@ Pod::Spec.new do |s|
   s.frameworks = 'UIKit', 'AVFoundation', 'Vision', 'CoreML', 'CoreMotion', 'AVKit', 'SceneKit', 'ImageIO'
   s.module_name = 'CustomAR'
 
+  s.static_framework = true
+
   s.dependency 'MediaPipeTasksVision', '0.10.14'
 end
